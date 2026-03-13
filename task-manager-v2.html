@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskFlow</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --white: #1a1d26;
+  --surface: #1a1d26;
+  --surface2: #22263a;
+  --border: #2e3248;
+  --border2: #3d4460;
+  --accent: #f97316;
+  --accent-light: rgba(249,115,22,0.12);
+  --accent-dark: #ea6d0a;
+  --text: #e8eaf0;
+  --text2: #c5c8d6;
+  --text3: #9ca3af;
+  --text4: #6b7280;
+  --rakuten: #f87171;
+  --yahoo: #fca5a5;
+  --amazon: #fbbf24;
+  --todo-bg: rgba(107,114,128,0.15); --todo-text: #9ca3af; --todo-border: rgba(107,114,128,0.3);
+  --prog-bg: rgba(59,130,246,0.12); --prog-text: #93c5fd; --prog-border: rgba(59,130,246,0.3);
+  --done-bg: rgba(34,197,94,0.12); --done-text: #86efac; --done-border: rgba(34,197,94,0.3);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg: 0 25px 60px rgba(0,0,0,0.6);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans JP', 'Sora', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ── FORM ELEMENTS ── */
+label { font-size: 13px; font-weight: 600; color: var(--text2); display: block; margin-bottom: 5px; }
+input[type=text], input[type=password], input[type=url], select, textarea {
+  width: 100%; padding: 10px 13px; background: var(--surface2);
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text); font-family: inherit; font-size: 14px; outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+select option { background: var(--surface2); }
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 3px rgba(249,115,22,0.1);
+}
+select { cursor: pointer; }
+textarea { resize: vertical; }
+.btn {
+  padding: 10px 20px; background: var(--accent); color: white; border: none;
+  border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: all .15s; font-family: inherit; display: inline-flex; align-items: center; gap: 6px;
+}
+.btn:hover { background: var(--accent-dark); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn:active { transform: translateY(0); }
+.btn-white { background: var(--white); color: var(--text2); border: 1.5px solid var(--border); }
+.btn-white:hover { background: var(--surface2); border-color: var(--border2); }
+.btn-danger { background: #ef4444; }
+.btn-danger:hover { background: #dc2626; }
+.btn-sm { padding: 6px 14px; font-size: 13px; }
+.btn-full { width: 100%; justify-content: center; padding: 12px; }
+.btn-ghost { background: none; color: var(--accent); border: 1.5px solid var(--accent); }
+.btn-ghost:hover { background: var(--accent-light); }
+
+/* ── CONFIG SCREEN ── */
+#configScreen {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at 30% 50%, #1e1b4b 0%, var(--bg) 60%);
+}
+.config-card {
+  background: var(--white); border-radius: 20px; padding: 48px;
+  width: 560px; max-width: 95vw; box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+.brand-icon { width: 40px; height: 40px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+.brand-name { font-size: 22px; font-weight: 700; color: var(--text); font-family: 'Sora', sans-serif; }
+.config-step { display: flex; gap: 12px; margin-bottom: 16px; padding: 14px; background: var(--bg); border-radius: var(--radius-sm); }
+.step-num { width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: white; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.step-text { font-size: 13px; color: var(--text2); line-height: 1.6; }
+.step-text strong { color: var(--text); }
+.config-fields { display: grid; gap: 8px; margin: 20px 0; }
+.config-fields input { font-family: monospace; font-size: 12px; background: var(--bg); }
+
+/* ── LOGIN ── */
+#loginScreen {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at 30% 50%, #1e1b4b 0%, var(--bg) 60%);
+}
+.login-card {
+  background: var(--white); border-radius: 20px; padding: 48px;
+  width: 420px; max-width: 95vw; box-shadow: var(--shadow-lg); border: 1px solid var(--border);
+}
+.login-title { font-size: 26px; font-weight: 700; margin: 16px 0 6px; font-family: 'Sora', sans-serif; }
+.login-sub { color: var(--text3); margin-bottom: 32px; font-size: 14px; }
+.role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+.role-btn {
+  padding: 20px; border: 2px solid var(--border); border-radius: var(--radius);
+  background: var(--bg); cursor: pointer; text-align: center; transition: all .15s; color: var(--text3);
+}
+.role-btn:hover { border-color: var(--accent); background: var(--accent-light); color: var(--text); }
+.role-btn.selected { border-color: var(--accent); background: var(--accent-light); color: var(--text); }
+.role-icon { font-size: 28px; margin-bottom: 6px; }
+.role-name { font-size: 14px; font-weight: 600; }
+.form-field { margin-bottom: 16px; }
+.collapsible { display: none; }
+.collapsible.show { display: block; }
+
+/* ── APP HEADER ── */
+#appScreen { display: none; }
+header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(15,17,23,0.92); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px; height: 58px; display: flex; align-items: center; justify-content: space-between;
+}
+.header-left { display: flex; align-items: center; gap: 14px; }
+.app-brand { display: flex; align-items: center; gap: 9px; }
+.app-brand .icon { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.app-brand .name { font-size: 17px; font-weight: 700; color: var(--text); font-family: 'Sora', sans-serif; }
+.user-chip {
+  font-size: 12px; padding: 4px 12px; border-radius: 20px; font-weight: 500;
+  background: var(--accent-light); color: var(--accent); border: 1px solid #fed7aa;
+}
+.header-right { display: flex; align-items: center; gap: 10px; }
+.icon-btn {
+  position: relative; width: 36px; height: 36px; border-radius: 9px;
+  background: var(--bg); border: 1.5px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 16px; transition: all .15s; color: var(--text3);
+}
+.icon-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+.badge {
+  position: absolute; top: -5px; right: -5px;
+  background: var(--accent); color: white; font-size: 10px; font-weight: 700;
+  min-width: 17px; height: 17px; border-radius: 9px; display: flex; align-items: center; justify-content: center;
+  padding: 0 4px; border: 2px solid white;
+}
+.logout-btn {
+  font-size: 13px; color: var(--text3); cursor: pointer; padding: 6px 14px;
+  border: 1.5px solid var(--border); border-radius: 8px; background: none;
+  font-family: inherit; font-weight: 500; transition: all .15s;
+}
+.logout-btn:hover { color: var(--text2); border-color: var(--border2); background: var(--bg); }
+
+/* ── TABS ── */
+.tabs {
+  display: flex; gap: 0; background: var(--surface);
+  border-bottom: 1px solid var(--border); padding: 0 28px; overflow-x: auto;
+}
+.tab {
+  padding: 14px 18px; font-size: 13px; font-weight: 500; color: var(--text3);
+  cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s;
+  white-space: nowrap; display: flex; align-items: center; gap: 6px;
+}
+.tab:hover { color: var(--text2); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.tab-badge {
+  background: var(--accent); color: white; font-size: 10px; font-weight: 700;
+  min-width: 16px; height: 16px; border-radius: 8px;
+  display: inline-flex; align-items: center; justify-content: center; padding: 0 4px;
+}
+
+/* ── MAIN ── */
+main { padding: 24px 28px; max-width: 1280px; margin: 0 auto; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--white); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow); margin-bottom: 20px;
+}
+.card-header {
+  padding: 18px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.card-body { padding: 20px; }
+
+/* ── STATS ── */
+.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 20px; }
+.stat-card {
+  background: var(--white); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 20px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 14px;
+}
+.stat-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.stat-val { font-size: 26px; font-weight: 700; font-family: 'Sora', sans-serif; line-height: 1; }
+.stat-label { font-size: 12px; color: var(--text3); margin-top: 3px; }
+
+/* ── FILTERS ── */
+.filters { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.filter-select { width: auto; padding: 8px 12px; font-size: 13px; }
+.search-input { flex: 1; min-width: 160px; max-width: 280px; padding: 8px 12px; font-size: 13px; }
+
+/* ── TASK TABLE ── */
+.task-table { width: 100%; border-collapse: collapse; }
+.task-table th {
+  text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 700;
+  color: var(--text3); text-transform: uppercase; letter-spacing: .5px;
+  background: var(--surface2); border-bottom: 1px solid var(--border); border-top: 1px solid var(--border);
+}
+.task-table th:first-child { border-radius: var(--radius-sm) 0 0 0; }
+.task-table th:last-child { border-radius: 0 var(--radius-sm) 0 0; }
+.task-table td { padding: 13px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.task-table tr:last-child td { border-bottom: none; }
+.task-table tbody tr { transition: background .1s; cursor: pointer; }
+.task-table tbody tr:hover td { background: rgba(255,255,255,0.03); }
+
+/* ── BADGES ── */
+.mall-badge {
+  display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; white-space: nowrap;
+}
+.mall-rakuten { background: rgba(191,0,0,0.15); color: #f87171; border: 1px solid rgba(191,0,0,0.3); }
+.mall-yahoo { background: rgba(255,0,51,0.12); color: #fca5a5; border: 1px solid rgba(255,0,51,0.25); }
+.mall-amazon { background: rgba(255,153,0,0.12); color: #fbbf24; border: 1px solid rgba(255,153,0,0.25); }
+.mall-other { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
+
+.status-badge {
+  display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
+  border-radius: 20px; font-size: 12px; font-weight: 600;
+}
+.status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.s-todo { background: var(--todo-bg); color: var(--todo-text); border: 1px solid var(--todo-border); }
+.s-todo .status-dot { background: #9ca3af; }
+.s-inprogress { background: var(--prog-bg); color: var(--prog-text); border: 1px solid var(--prog-border); }
+.s-inprogress .status-dot { background: #3b82f6; }
+.s-done { background: var(--done-bg); color: var(--done-text); border: 1px solid var(--done-border); }
+.s-done .status-dot { background: #22c55e; }
+
+.new-badge {
+  display: inline-block; background: var(--accent); color: white; font-size: 10px;
+  font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-left: 4px;
+  animation: blink 1.5s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:.5} }
+
+.proj-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; padding: 2px 8px; border-radius: 4px;
+  background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; font-weight: 600;
+}
+
+/* ── TASK FORM ── */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-grid .full { grid-column: 1/-1; }
+.section-divider {
+  grid-column: 1/-1; padding: 12px 0 4px;
+  font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase;
+  letter-spacing: 1px; border-top: 1px solid var(--border); margin-top: 4px;
+}
+
+/* ── IMAGE UPLOAD ── */
+.img-upload {
+  border: 2px dashed var(--border2); border-radius: var(--radius-sm);
+  padding: 28px; text-align: center; cursor: pointer; transition: all .15s; color: var(--text3);
+  background: var(--surface2);
+}
+.img-upload:hover, .img-upload.drag-over { border-color: var(--accent); background: var(--accent-light); color: var(--text2); }
+.img-upload .ico { font-size: 28px; margin-bottom: 8px; }
+.img-preview { max-width: 100%; max-height: 180px; border-radius: var(--radius-sm); margin-top: 12px; object-fit: contain; border: 1px solid var(--border); }
+#imgFileInput { display: none; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  z-index: 200; align-items: center; justify-content: center; padding: 20px;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--surface); border-radius: 16px; width: 660px; max-width: 95vw;
+  max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg); border: 1px solid var(--border);
+}
+.modal-header {
+  padding: 18px 22px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--surface); z-index: 1;
+}
+.modal-header h3 { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.modal-close { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 18px; width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+.modal-close:hover { background: var(--bg); color: var(--text); }
+.modal-body { padding: 22px; }
+.modal-footer { padding: 16px 22px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; background: var(--surface2); }
+
+/* ── DETAIL VIEW ── */
+.detail-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+.detail-group { }
+.detail-label { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px; }
+.detail-val { font-size: 14px; color: var(--text); }
+.detail-img { max-width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--border); cursor: pointer; transition: opacity .15s; }
+.detail-img:hover { opacity: .9; }
+.detail-link { color: var(--accent); text-decoration: none; word-break: break-all; font-size: 13px; }
+.detail-link:hover { text-decoration: underline; }
+.section-title { font-size: 12px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; margin: 20px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+
+/* ── STATUS BUTTONS ── */
+.status-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.s-btn {
+  padding: 8px 16px; border-radius: var(--radius-sm); border: 1.5px solid transparent;
+  cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; transition: all .15s;
+}
+.s-btn-todo { background: var(--todo-bg); color: var(--todo-text); border-color: var(--todo-border); }
+.s-btn-todo:hover, .s-btn-todo.active { border-color: #9ca3af; background: #e5e7eb; }
+.s-btn-inprogress { background: var(--prog-bg); color: var(--prog-text); border-color: var(--prog-border); }
+.s-btn-inprogress:hover, .s-btn-inprogress.active { border-color: #3b82f6; background: #dbeafe; }
+.s-btn-done { background: var(--done-bg); color: var(--done-text); border-color: var(--done-border); }
+.s-btn-done:hover, .s-btn-done.active { border-color: #22c55e; background: #dcfce7; }
+
+/* ── COMMENTS ── */
+.comment-list { margin-bottom: 14px; }
+.comment {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 12px 14px; margin-bottom: 8px;
+}
+.comment-meta { font-size: 12px; color: var(--text3); margin-bottom: 4px; }
+.comment-author { font-weight: 700; color: var(--accent); }
+.comment-text { font-size: 14px; line-height: 1.6; color: var(--text2); }
+.comment-form { display: flex; gap: 8px; }
+.comment-form textarea { flex: 1; height: 40px; resize: none; }
+
+/* ── STAFF ── */
+.staff-item {
+  display: flex; align-items: center; gap: 12px; padding: 14px;
+  background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px;
+}
+.staff-avatar {
+  width: 38px; height: 38px; border-radius: 50%; background: var(--accent);
+  color: white; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.staff-name { font-weight: 600; font-size: 15px; }
+.staff-meta { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.add-form { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.add-form input { flex: 1; min-width: 140px; }
+
+/* ── PROJECT ── */
+.project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px; }
+.project-card {
+  background: var(--white); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 18px; cursor: pointer; transition: all .15s; box-shadow: var(--shadow);
+}
+.project-card:hover { border-color: var(--accent); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.project-card-name { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.project-card-meta { font-size: 12px; color: var(--text3); }
+.project-card-bar { height: 4px; background: var(--bg); border-radius: 2px; margin-top: 12px; overflow: hidden; }
+.project-card-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width .3s; }
+.project-tasks-list { }
+
+/* ── EMPTY ── */
+.empty { text-align: center; padding: 56px 20px; color: var(--text4); }
+.empty-icon { font-size: 44px; margin-bottom: 12px; }
+.empty-text { font-size: 14px; }
+
+/* ── ALERTS ── */
+.alert {
+  position: fixed; top: 72px; right: 24px; z-index: 400;
+  padding: 12px 18px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500;
+  box-shadow: var(--shadow-md); animation: slideIn .25s ease; display: flex; align-items: center; gap: 10px;
+  max-width: 300px;
+}
+.alert-success { background: #14532d; border: 1px solid #22c55e; color: #86efac; }
+.alert-error { background: #450a0a; border: 1px solid #ef4444; color: #fca5a5; }
+@keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+@media (max-width: 768px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .form-grid .full { grid-column: auto; }
+  main { padding: 16px; }
+  header { padding: 0 16px; }
+  .tabs { padding: 0 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- CONFIG -->
+<div id="configScreen">
+  <div class="config-card">
+    <div class="brand">
+      <div class="brand-icon">🛒</div>
+      <div class="brand-name">TaskFlow</div>
+    </div>
+    <h2 style="font-size:20px;font-weight:700;margin-bottom:6px;">Firebase初回設定</h2>
+    <p style="color:var(--text3);font-size:13px;margin-bottom:20px;">Firebaseプロジェクトの設定値を入力してください</p>
+    <div class="config-step">
+      <div class="step-num">1</div>
+      <div class="step-text"><strong>console.firebase.google.com</strong> でプロジェクトを作成</div>
+    </div>
+    <div class="config-step">
+      <div class="step-num">2</div>
+      <div class="step-text"><strong>Firestore Database</strong> と <strong>Storage</strong> を有効化（テストモード）</div>
+    </div>
+    <div class="config-step">
+      <div class="step-num">3</div>
+      <div class="step-text">プロジェクト設定 → ウェブアプリ登録 → 設定値をコピー</div>
+    </div>
+    <div class="config-fields">
+      <input type="text" id="cfgApiKey" placeholder="apiKey" />
+      <input type="text" id="cfgAuthDomain" placeholder="authDomain" />
+      <input type="text" id="cfgProjectId" placeholder="projectId" />
+      <input type="text" id="cfgStorageBucket" placeholder="storageBucket" />
+      <input type="text" id="cfgMessagingSenderId" placeholder="messagingSenderId" />
+      <input type="text" id="cfgAppId" placeholder="appId" />
+    </div>
+    <button class="btn btn-full" onclick="saveConfig()">設定を保存してアプリを起動 →</button>
+    <p style="text-align:center;font-size:12px;color:var(--text4);margin-top:10px;">設定はブラウザに保存され次回から不要です</p>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="loginScreen" style="display:none;">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-icon">🛒</div>
+      <div class="brand-name">TaskFlow</div>
+    </div>
+    <div class="login-title">ログイン</div>
+    <div class="login-sub">役割を選択してログインしてください</div>
+    <div class="role-grid">
+      <div class="role-btn" id="roleAdmin" onclick="selectRole('admin')">
+        <div class="role-icon">👑</div>
+        <div class="role-name">管理者</div>
+      </div>
+      <div class="role-btn" id="roleStaff" onclick="selectRole('staff')">
+        <div class="role-icon">👤</div>
+        <div class="role-name">スタッフ</div>
+      </div>
+    </div>
+    <div class="collapsible" id="staffSelectWrap">
+      <div class="form-field">
+        <label>スタッフを選択</label>
+        <select id="loginStaffSel"></select>
+      </div>
+    </div>
+    <div class="collapsible" id="adminPassWrap">
+      <div class="form-field">
+        <label>管理者パスワード</label>
+        <input type="password" id="adminPassInput" placeholder="パスワードを入力" />
+      </div>
+    </div>
+    <button class="btn btn-full" onclick="doLogin()">ログイン →</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appScreen">
+  <header>
+    <div class="header-left">
+      <div class="app-brand">
+        <div class="icon">🛒</div>
+        <div class="name">TaskFlow</div>
+      </div>
+      <span class="user-chip" id="headerUser"></span>
+    </div>
+    <div class="header-right">
+      <button class="icon-btn" onclick="switchToCompleted()" title="完了通知" id="notifBtn">
+        🔔
+        <span class="badge" id="notifBadge" style="display:none;"></span>
+      </button>
+      <button class="logout-btn" onclick="doLogout()">ログアウト</button>
+    </div>
+  </header>
+
+  <!-- ADMIN TABS -->
+  <div class="tabs" id="adminTabs" style="display:none;">
+    <div class="tab active" id="tab-dashboard" onclick="switchTab('dashboard')">📊 ダッシュボード</div>
+    <div class="tab" id="tab-allTasks" onclick="switchTab('allTasks')">📋 全タスク</div>
+    <div class="tab" id="tab-completed" onclick="switchTab('completed')">
+      ✅ 完了タスク
+      <span class="tab-badge" id="completedBadge" style="display:none;"></span>
+    </div>
+    <div class="tab" id="tab-myTasks" onclick="switchTab('myTasks')">👑 自分のタスク</div>
+    <div class="tab" id="tab-projects" onclick="switchTab('projects')">🗂 プロジェクト</div>
+    <div class="tab" id="tab-createTask" onclick="switchTab('createTask')">➕ タスク作成</div>
+    <div class="tab" id="tab-staffMgmt" onclick="switchTab('staffMgmt')">👥 スタッフ管理</div>
+  </div>
+
+  <!-- STAFF TABS -->
+  <div class="tabs" id="staffTabs" style="display:none;">
+    <div class="tab active" id="tab-myTasksStaff" onclick="switchTab('myTasksStaff')">📋 マイタスク</div>
+  </div>
+
+  <main>
+    <!-- DASHBOARD -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">📌 最近のタスク</div></div>
+        <div id="recentList"></div>
+      </div>
+    </div>
+
+    <!-- ALL TASKS -->
+    <div class="panel" id="panel-allTasks">
+      <div class="card">
+        <div class="card-header"><div class="card-title">📋 全タスク一覧</div></div>
+        <div class="card-body">
+          <div class="filters">
+            <select class="filter-select" id="fMall" onchange="renderAll()">
+              <option value="">全モール</option>
+              <option value="rakuten">楽天</option>
+              <option value="yahoo">Yahoo!</option>
+              <option value="amazon">Amazon</option>
+              <option value="other">その他</option>
+            </select>
+            <select class="filter-select" id="fStatus" onchange="renderAll()">
+              <option value="">全ステータス</option>
+              <option value="todo">未着手</option>
+              <option value="inprogress">進行中</option>
+              <option value="done">完了</option>
+            </select>
+            <select class="filter-select" id="fStaff" onchange="renderAll()">
+              <option value="">全担当者</option>
+            </select>
+            <select class="filter-select" id="fProject" onchange="renderAll()">
+              <option value="">全プロジェクト</option>
+            </select>
+          </div>
+          <div id="allTasksTable"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPLETED -->
+    <div class="panel" id="panel-completed">
+      <div class="card">
+        <div class="card-header"><div class="card-title">✅ 完了タスク</div></div>
+        <div id="completedTable"></div>
+      </div>
+    </div>
+
+    <!-- MY TASKS (Admin) -->
+    <div class="panel" id="panel-myTasks">
+      <div class="card">
+        <div class="card-header"><div class="card-title" id="adminMyTasksTitle">👑 自分のタスク</div></div>
+        <div class="card-body">
+          <div class="filters">
+            <select class="filter-select" id="fMyMallA" onchange="renderMyTasksAdmin()">
+              <option value="">全モール</option>
+              <option value="rakuten">楽天</option>
+              <option value="yahoo">Yahoo!</option>
+              <option value="amazon">Amazon</option>
+              <option value="other">その他</option>
+            </select>
+            <select class="filter-select" id="fMyStatusA" onchange="renderMyTasksAdmin()">
+              <option value="">全ステータス</option>
+              <option value="todo">未着手</option>
+              <option value="inprogress">進行中</option>
+              <option value="done">完了</option>
+            </select>
+          </div>
+          <div id="myTasksAdminTable"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROJECTS -->
+    <div class="panel" id="panel-projects">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <h2 style="font-size:18px;font-weight:700;">🗂 プロジェクト管理</h2>
+        <button class="btn btn-ghost btn-sm" onclick="openNewProjectModal()">＋ 新規プロジェクト</button>
+      </div>
+      <div class="project-grid" id="projectGrid"></div>
+      <div id="projectDetail" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title" id="projDetailTitle"></div>
+            <button class="btn btn-white btn-sm" onclick="closeProjectDetail()">← 一覧に戻る</button>
+          </div>
+          <div id="projDetailBody"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CREATE TASK -->
+    <div class="panel" id="panel-createTask">
+      <div class="card">
+        <div class="card-header"><div class="card-title">➕ 新規タスク作成</div></div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div>
+              <label>モール *</label>
+              <select id="newMall">
+                <option value="rakuten">楽天</option>
+                <option value="yahoo">Yahoo!</option>
+                <option value="amazon">Amazon</option>
+                <option value="other">その他</option>
+              </select>
+            </div>
+            <div>
+              <label>担当者 *</label>
+              <select id="newAssignee"></select>
+            </div>
+            <div class="full">
+              <label>作業内容 *</label>
+              <textarea id="newContent" rows="4" placeholder="作業の詳細を入力してください..."></textarea>
+            </div>
+            <div class="section-divider">🛍 商品情報（任意）</div>
+            <div>
+              <label>商品名</label>
+              <input type="text" id="newProductName" placeholder="例：〇〇 レッド Lサイズ" />
+            </div>
+            <div>
+              <label>商品URL</label>
+              <input type="url" id="newProductUrl" placeholder="https://..." />
+            </div>
+            <div class="section-divider">📎 その他</div>
+            <div>
+              <label>プロジェクト（任意）</label>
+              <select id="newProject"><option value="">なし</option></select>
+            </div>
+            <div>
+              <label>期限（任意）</label>
+              <input type="text" id="newDeadline" placeholder="例：2025/06/30" />
+            </div>
+            <div class="full">
+              <label>添付画像（スクリーンショット等）</label>
+              <div class="img-upload" id="uploadArea" onclick="document.getElementById('imgFileInput').click()" ondragover="handleDragOver(event)" ondrop="handleDrop(event)">
+                <div class="ico">🖼️</div>
+                <div style="font-size:14px;">クリックまたはドラッグ＆ドロップ</div>
+                <div style="font-size:12px;color:var(--text4);margin-top:4px;">PNG, JPG, GIF 対応</div>
+                <img id="imgPreview" class="img-preview" style="display:none;" />
+              </div>
+              <input type="file" id="imgFileInput" accept="image/*" onchange="handleFileSelect(event)" />
+            </div>
+            <div class="full">
+              <button class="btn btn-full" onclick="createTask()">✅ タスクを作成する</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STAFF MGMT -->
+    <div class="panel" id="panel-staffMgmt">
+      <div class="card">
+        <div class="card-header"><div class="card-title">👥 スタッフ管理</div></div>
+        <div class="card-body">
+          <div id="staffListEl"></div>
+          <div class="add-form">
+            <input type="text" id="newStaffName" placeholder="スタッフ名" />
+            <input type="password" id="newStaffPass" placeholder="パスワード" style="max-width:160px;" />
+            <button class="btn btn-sm" onclick="addStaff()">＋ 追加</button>
+          </div>
+          <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
+            <label>管理者パスワード変更</label>
+            <div class="add-form" style="margin-top:8px;">
+              <input type="password" id="newAdminPass" placeholder="新しいパスワード" style="max-width:220px;" />
+              <button class="btn btn-sm btn-white" onclick="changeAdminPass()">変更</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MY TASKS (Staff) -->
+    <div class="panel" id="panel-myTasksStaff">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title" id="staffMyTasksTitle">📋 マイタスク</div>
+        </div>
+        <div class="card-body">
+          <div class="filters">
+            <select class="filter-select" id="fMyMall" onchange="renderMyTasksStaff()">
+              <option value="">全モール</option>
+              <option value="rakuten">楽天</option>
+              <option value="yahoo">Yahoo!</option>
+              <option value="amazon">Amazon</option>
+              <option value="other">その他</option>
+            </select>
+            <select class="filter-select" id="fMyStatus" onchange="renderMyTasksStaff()">
+              <option value="">全ステータス</option>
+              <option value="todo">未着手</option>
+              <option value="inprogress">進行中</option>
+              <option value="done">完了</option>
+            </select>
+          </div>
+          <div id="myTasksStaffTable"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- TASK DETAIL MODAL -->
+<div class="modal-overlay" id="taskModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">タスク詳細</h3>
+      <button class="modal-close" onclick="closeModal('taskModal')">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
+
+<!-- PROJECT MODAL -->
+<div class="modal-overlay" id="projectModal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <h3>🗂 プロジェクト作成</h3>
+      <button class="modal-close" onclick="closeModal('projectModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label>プロジェクト名 *</label>
+        <input type="text" id="projName" placeholder="例：春の新商品ページ整備" />
+      </div>
+      <div class="form-field">
+        <label>メモ（任意）</label>
+        <textarea id="projMemo" rows="3" placeholder="プロジェクトの概要や目的など..."></textarea>
+      </div>
+      <div class="form-field">
+        <label>期限（任意）</label>
+        <input type="text" id="projDeadline" placeholder="例：2025/09/30" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-white" onclick="closeModal('projectModal')">キャンセル</button>
+      <button class="btn" onclick="saveProject()">作成する</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+
+const ADMIN_PASS_KEY = 'taskflow_admin_pass';
+let db, storage, F;
+let currentUser = null;
+let tasks = [], staffList = [], projects = [];
+let uploadedFile = null, currentTaskId = null;
+
+// ── CONFIG ──
+function loadConfig() {
+  try { return JSON.parse(localStorage.getItem('taskflow_config') || ''); } catch { return null; }
+}
+window.saveConfig = function() {
+  const c = {
+    apiKey: el('cfgApiKey').value.trim(), authDomain: el('cfgAuthDomain').value.trim(),
+    projectId: el('cfgProjectId').value.trim(), storageBucket: el('cfgStorageBucket').value.trim(),
+    messagingSenderId: el('cfgMessagingSenderId').value.trim(), appId: el('cfgAppId').value.trim()
+  };
+  if (!c.apiKey || !c.projectId) { alert('apiKeyとprojectIdは必須です'); return; }
+  localStorage.setItem('taskflow_config', JSON.stringify(c));
+  location.reload();
+};
+
+async function initFB(cfg) {
+  const app = initializeApp(cfg);
+  db = getFirestore(app);
+  storage = getStorage(app);
+  F = { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, ref, uploadBytes, getDownloadURL };
+}
+
+// ── INIT ──
+async function init() {
+  const cfg = loadConfig();
+  if (!cfg) { show('configScreen'); return; }
+  hide('configScreen');
+  try {
+    await initFB(cfg);
+    await loadStaff();
+    await loadProjects();
+    const saved = sessionStorage.getItem('taskflow_user');
+    if (saved) { currentUser = JSON.parse(saved); showApp(); }
+    else showLogin();
+  } catch(e) {
+    console.error(e);
+    localStorage.removeItem('taskflow_config');
+    alert('Firebase接続エラー。設定を再確認してください。\n' + e.message);
+    location.reload();
+  }
+}
+
+// ── AUTH ──
+window.selectRole = function(role) {
+  el('roleAdmin').classList.toggle('selected', role === 'admin');
+  el('roleStaff').classList.toggle('selected', role === 'staff');
+  el('staffSelectWrap').classList.toggle('show', role === 'staff');
+  el('adminPassWrap').classList.toggle('show', role === 'admin');
+};
+
+window.doLogin = async function() {
+  const isAdmin = el('roleAdmin').classList.contains('selected');
+  const isStaff = el('roleStaff').classList.contains('selected');
+  if (!isAdmin && !isStaff) { showAlert('役割を選択してください', 'error'); return; }
+  if (isAdmin) {
+    const pass = el('adminPassInput').value;
+    if (pass !== (localStorage.getItem(ADMIN_PASS_KEY) || 'admin123')) { showAlert('パスワードが違います', 'error'); return; }
+    currentUser = { role: 'admin', name: '管理者' };
+  } else {
+    const name = el('loginStaffSel').value;
+    if (!name) { showAlert('スタッフを選択してください', 'error'); return; }
+    const s = staffList.find(x => x.name === name);
+    const pass = prompt(`${name} のパスワードを入力してください`);
+    if (s?.password && pass !== s.password) { showAlert('パスワードが違います', 'error'); return; }
+    currentUser = { role: 'staff', name };
+  }
+  sessionStorage.setItem('taskflow_user', JSON.stringify(currentUser));
+  showApp();
+};
+
+window.doLogout = function() {
+  sessionStorage.removeItem('taskflow_user');
+  currentUser = null;
+  hide('appScreen'); showLogin();
+};
+
+function showLogin() {
+  show('loginScreen'); hide('appScreen');
+}
+
+// ── APP ──
+function showApp() {
+  hide('loginScreen'); show('appScreen');
+  el('headerUser').textContent = currentUser.role === 'admin' ? '👑 管理者' : `👤 ${currentUser.name}`;
+  el('adminTabs').style.display = currentUser.role === 'admin' ? 'flex' : 'none';
+  el('staffTabs').style.display = currentUser.role === 'staff' ? 'flex' : 'none';
+  el('notifBtn').style.display = currentUser.role === 'admin' ? 'flex' : 'none';
+  if (currentUser.role === 'admin') { switchTab('dashboard'); requestNotif(); }
+  else switchTab('myTasksStaff');
+  listenTasks();
+}
+
+function listenTasks() {
+  const q = F.query(F.collection(db, 'tasks'), F.orderBy('createdAt', 'desc'));
+  F.onSnapshot(q, snap => {
+    const prev = [...tasks];
+    tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (currentUser?.role === 'admin') {
+      tasks.forEach(t => {
+        if (t.status === 'done' && !t.adminRead) {
+          const p = prev.find(x => x.id === t.id);
+          if (p && p.status !== 'done') notifyBrowser(`✅ ${t.assignee} が完了しました：${(t.content||'').substring(0,30)}`);
+        }
+      });
+      updateBadge();
+    }
+    renderCurrentPanel();
+  });
+}
+
+function renderCurrentPanel() {
+  const a = document.querySelector('.tab.active');
+  if (a) renderPanel(a.id.replace('tab-', ''));
+}
+
+window.switchTab = function(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  const t = el('tab-' + name), p = el('panel-' + name);
+  if (t) t.classList.add('active');
+  if (p) p.classList.add('active');
+  if (name === 'completed') markRead();
+  renderPanel(name);
+};
+
+window.switchToCompleted = function() { if (currentUser?.role === 'admin') switchTab('completed'); };
+
+function renderPanel(n) {
+  if (n === 'dashboard') renderDashboard();
+  else if (n === 'allTasks') renderAll();
+  else if (n === 'completed') renderCompleted();
+  else if (n === 'myTasks') renderMyTasksAdmin();
+  else if (n === 'projects') renderProjects();
+  else if (n === 'myTasksStaff') renderMyTasksStaff();
+  else if (n === 'staffMgmt') renderStaffMgmt();
+}
+
+// ── DASHBOARD ──
+function renderDashboard() {
+  const t = tasks.length, todo = tasks.filter(x=>x.status==='todo').length,
+        inp = tasks.filter(x=>x.status==='inprogress').length, done = tasks.filter(x=>x.status==='done').length;
+  el('statsGrid').innerHTML = [
+    ['#fff7ed','#fed7aa',t,'📋','全タスク'],
+    ['#f3f4f6','#e5e7eb',todo,'⏳','未着手'],
+    ['#eff6ff','#bfdbfe',inp,'🔄','進行中'],
+    ['#f0fdf4','#bbf7d0',done,'✅','完了'],
+  ].map(([bg,bc,val,ico,lbl])=>`
+    <div class="stat-card">
+      <div class="stat-icon" style="background:${bg};border:1px solid ${bc};">${ico}</div>
+      <div><div class="stat-val">${val}</div><div class="stat-label">${lbl}</div></div>
+    </div>`).join('');
+  el('recentList').innerHTML = tasks.length ? taskTable(tasks.slice(0,8), true) : empty('タスクがありません');
+}
+
+// ── ALL TASKS ──
+window.renderAll = function() {
+  const mall = el('fMall').value, status = el('fStatus').value,
+        staff = el('fStaff').value, proj = el('fProject').value;
+  let f = tasks;
+  if (mall) f = f.filter(t=>t.mall===mall);
+  if (status) f = f.filter(t=>t.status===status);
+  if (staff) f = f.filter(t=>t.assignee===staff);
+  if (proj) f = f.filter(t=>t.projectId===proj);
+  el('allTasksTable').innerHTML = f.length ? taskTable(f, true) : empty('タスクがありません');
+};
+
+// ── COMPLETED ──
+function renderCompleted() {
+  const done = tasks.filter(t=>t.status==='done');
+  el('completedTable').innerHTML = done.length ? taskTable(done, true) : empty('完了タスクはまだありません');
+}
+
+function updateBadge() {
+  const n = tasks.filter(t=>t.status==='done'&&!t.adminRead).length;
+  [el('completedBadge'), el('notifBadge')].forEach(b => {
+    b.textContent = n; b.style.display = n > 0 ? 'flex' : 'none';
+  });
+}
+
+async function markRead() {
+  const unread = tasks.filter(t=>t.status==='done'&&!t.adminRead);
+  for (const t of unread) await F.updateDoc(F.doc(db,'tasks',t.id), { adminRead: true });
+}
+
+// ── MY TASKS (ADMIN) ──
+window.renderMyTasksAdmin = function() {
+  const mall = el('fMyMallA').value, status = el('fMyStatusA').value;
+  let f = tasks.filter(t=>t.assignee==='管理者');
+  if (mall) f = f.filter(t=>t.mall===mall);
+  if (status) f = f.filter(t=>t.status===status);
+  el('adminMyTasksTitle').textContent = `👑 自分のタスク（${f.length}件）`;
+  el('myTasksAdminTable').innerHTML = f.length ? taskTable(f, false) : empty('自分のタスクはありません');
+};
+
+// ── MY TASKS (STAFF) ──
+window.renderMyTasksStaff = function() {
+  const mall = el('fMyMall').value, status = el('fMyStatus').value;
+  let f = tasks.filter(t=>t.assignee===currentUser.name);
+  if (mall) f = f.filter(t=>t.mall===mall);
+  if (status) f = f.filter(t=>t.status===status);
+  el('staffMyTasksTitle').textContent = `📋 ${currentUser.name} のタスク（${f.length}件）`;
+  el('myTasksStaffTable').innerHTML = f.length ? taskTable(f, false) : empty('担当タスクはありません');
+};
+
+// ── PROJECTS ──
+async function loadProjects() {
+  const snap = await F.getDocs(F.collection(db, 'projects'));
+  projects = snap.docs.map(d=>({id:d.id,...d.data()}));
+  refreshProjectDropdowns();
+}
+
+window.renderProjects = function() {
+  const grid = el('projectGrid'), detail = el('projectDetail');
+  detail.style.display = 'none'; grid.style.display = '';
+  if (!projects.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1">${empty('プロジェクトがありません<br><small>右上の「＋ 新規プロジェクト」から作成してください</small>')}</div>`;
+    return;
+  }
+  grid.innerHTML = projects.map(p => {
+    const related = tasks.filter(t=>t.projectId===p.id);
+    const done = related.filter(t=>t.status==='done').length;
+    const pct = related.length ? Math.round(done/related.length*100) : 0;
+    return `<div class="project-card" onclick="openProjectDetail('${p.id}')">
+      <div class="project-card-name">${p.name}</div>
+      <div class="project-card-meta">${related.length}件のタスク・完了${done}件${p.deadline ? `・期限: ${p.deadline}` : ''}</div>
+      ${p.memo ? `<div style="font-size:12px;color:var(--text3);margin-top:6px;line-height:1.5;">${p.memo}</div>` : ''}
+      <div class="project-card-bar"><div class="project-card-bar-fill" style="width:${pct}%"></div></div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px;">進捗 ${pct}%</div>
+    </div>`;
+  }).join('');
+};
+
+window.openProjectDetail = function(id) {
+  const p = projects.find(x=>x.id===id);
+  if (!p) return;
+  const related = tasks.filter(t=>t.projectId===id);
+  el('projectGrid').style.display = 'none';
+  const det = el('projectDetail');
+  det.style.display = 'block';
+  el('projDetailTitle').textContent = `🗂 ${p.name}`;
+  el('projDetailBody').innerHTML = `
+    <div class="card-body">
+      ${p.memo ? `<p style="color:var(--text2);margin-bottom:16px;">${p.memo}</p>` : ''}
+      ${p.deadline ? `<p style="font-size:13px;color:var(--text3);margin-bottom:16px;">期限：${p.deadline}</p>` : ''}
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <strong style="font-size:14px;">関連タスク（${related.length}件）</strong>
+        <button class="btn btn-danger btn-sm" onclick="deleteProject('${id}')">プロジェクト削除</button>
+      </div>
+      ${related.length ? taskTable(related, true) : empty('このプロジェクトにタスクはありません')}
+    </div>`;
+};
+
+window.closeProjectDetail = function() {
+  el('projectDetail').style.display = 'none';
+  el('projectGrid').style.display = '';
+};
+
+window.openNewProjectModal = function() { openModal('projectModal'); };
+
+window.saveProject = async function() {
+  const name = el('projName').value.trim();
+  if (!name) { showAlert('プロジェクト名を入力してください', 'error'); return; }
+  const ref = await F.addDoc(F.collection(db,'projects'), {
+    name, memo: el('projMemo').value.trim(), deadline: el('projDeadline').value.trim(),
+    createdAt: F.serverTimestamp()
+  });
+  projects.push({ id: ref.id, name, memo: el('projMemo').value.trim(), deadline: el('projDeadline').value.trim() });
+  el('projName').value=''; el('projMemo').value=''; el('projDeadline').value='';
+  refreshProjectDropdowns();
+  closeModal('projectModal');
+  showAlert(`「${name}」を作成しました`, 'success');
+  renderProjects();
+};
+
+window.deleteProject = async function(id) {
+  const p = projects.find(x=>x.id===id);
+  if (!confirm(`「${p?.name}」を削除しますか？\n関連タスクのプロジェクト設定は解除されます。`)) return;
+  await F.deleteDoc(F.doc(db,'projects',id));
+  // unlink tasks
+  const related = tasks.filter(t=>t.projectId===id);
+  for (const t of related) await F.updateDoc(F.doc(db,'tasks',t.id), { projectId: null });
+  projects = projects.filter(x=>x.id!==id);
+  refreshProjectDropdowns();
+  closeProjectDetail();
+  showAlert('プロジェクトを削除しました', 'success');
+  renderProjects();
+};
+
+function refreshProjectDropdowns() {
+  ['newProject','fProject'].forEach(id => {
+    const s = el(id); if (!s) return;
+    const cur = s.value;
+    s.innerHTML = '<option value="">なし</option>' + projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+    if (id==='fProject') s.innerHTML = '<option value="">全プロジェクト</option>' + projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+    s.value = cur;
+  });
+}
+
+// ── STAFF ──
+async function loadStaff() {
+  const snap = await F.getDocs(F.collection(db,'staff'));
+  staffList = snap.docs.map(d=>({id:d.id,...d.data()}));
+  refreshStaffDropdowns();
+}
+
+function refreshStaffDropdowns() {
+  ['loginStaffSel','newAssignee','fStaff'].forEach(id => {
+    const s = el(id); if (!s) return;
+    if (id === 'loginStaffSel') {
+      s.innerHTML = staffList.map(x=>`<option value="${x.name}">${x.name}</option>`).join('') || '<option value="">スタッフなし</option>';
+    } else if (id === 'newAssignee') {
+      s.innerHTML = '<option value="管理者">👑 管理者（自分）</option>' + staffList.map(x=>`<option value="${x.name}">${x.name}</option>`).join('');
+    } else {
+      s.innerHTML = '<option value="">全担当者</option><option value="管理者">管理者</option>' + staffList.map(x=>`<option value="${x.name}">${x.name}</option>`).join('');
+    }
+  });
+}
+
+function renderStaffMgmt() {
+  if (!staffList.length) { el('staffListEl').innerHTML = empty('スタッフが登録されていません'); return; }
+  el('staffListEl').innerHTML = staffList.map(s => {
+    const cnt = tasks.filter(t=>t.assignee===s.name).length;
+    return `<div class="staff-item">
+      <div class="staff-avatar">${s.name[0]}</div>
+      <div style="flex:1">
+        <div class="staff-name">${s.name}</div>
+        <div class="staff-meta">担当タスク ${cnt}件</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="removeStaff('${s.id}','${s.name}')">削除</button>
+    </div>`;
+  }).join('');
+}
+
+window.addStaff = async function() {
+  const name = el('newStaffName').value.trim(), pass = el('newStaffPass').value;
+  if (!name) { showAlert('スタッフ名を入力してください', 'error'); return; }
+  if (staffList.find(s=>s.name===name)) { showAlert('同名のスタッフが存在します', 'error'); return; }
+  const ref = await F.addDoc(F.collection(db,'staff'), { name, password: pass });
+  staffList.push({ id: ref.id, name, password: pass });
+  el('newStaffName').value=''; el('newStaffPass').value='';
+  refreshStaffDropdowns(); renderStaffMgmt();
+  showAlert(`${name} を追加しました`, 'success');
+};
+
+window.removeStaff = async function(id, name) {
+  if (!confirm(`${name} を削除しますか？`)) return;
+  await F.deleteDoc(F.doc(db,'staff',id));
+  staffList = staffList.filter(s=>s.id!==id);
+  refreshStaffDropdowns(); renderStaffMgmt();
+  showAlert(`${name} を削除しました`, 'success');
+};
+
+window.changeAdminPass = function() {
+  const p = el('newAdminPass').value;
+  if (!p) { showAlert('新しいパスワードを入力してください', 'error'); return; }
+  localStorage.setItem(ADMIN_PASS_KEY, p);
+  el('newAdminPass').value = '';
+  showAlert('パスワードを変更しました', 'success');
+};
+
+// ── CREATE TASK ──
+window.handleFileSelect = e => { if (e.target.files[0]) previewImg(e.target.files[0]); };
+window.handleDragOver = e => { e.preventDefault(); el('uploadArea').classList.add('drag-over'); };
+window.handleDrop = e => {
+  e.preventDefault(); el('uploadArea').classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f?.type.startsWith('image/')) previewImg(f);
+};
+function previewImg(file) {
+  uploadedFile = file;
+  const r = new FileReader();
+  r.onload = e => { const img = el('imgPreview'); img.src = e.target.result; img.style.display = 'block'; };
+  r.readAsDataURL(file);
+}
+
+window.createTask = async function() {
+  const content = el('newContent').value.trim(), assignee = el('newAssignee').value;
+  if (!content) { showAlert('作業内容を入力してください', 'error'); return; }
+  if (!assignee) { showAlert('担当者を選択してください', 'error'); return; }
+  let imageUrl = null;
+  if (uploadedFile) {
+    const storageRef = F.ref(storage, `tasks/${Date.now()}_${uploadedFile.name}`);
+    const snap = await F.uploadBytes(storageRef, uploadedFile);
+    imageUrl = await F.getDownloadURL(snap.ref);
+  }
+  await F.addDoc(F.collection(db,'tasks'), {
+    mall: el('newMall').value, content, assignee,
+    productName: el('newProductName').value.trim(),
+    productUrl: el('newProductUrl').value.trim(),
+    projectId: el('newProject').value || null,
+    deadline: el('newDeadline').value.trim(),
+    imageUrl, status: 'todo', adminRead: true,
+    createdAt: F.serverTimestamp()
+  });
+  ['newContent','newProductName','newProductUrl','newDeadline'].forEach(id => el(id).value='');
+  el('newProject').value=''; el('imgPreview').style.display='none';
+  uploadedFile=null; el('imgFileInput').value='';
+  showAlert('タスクを作成しました ✅', 'success');
+};
+
+// ── TASK DETAIL ──
+window.openTask = async function(id) {
+  const task = tasks.find(t=>t.id===id); if (!task) return;
+  currentTaskId = id;
+  const snap = await F.getDocs(F.collection(db,'tasks',id,'comments'));
+  const comments = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.createdAt?.seconds||0)-(b.createdAt?.seconds||0));
+  const proj = task.projectId ? projects.find(p=>p.id===task.projectId) : null;
+
+  el('modalTitle').innerHTML = `${mallBadge(task.mall)} ${statusBadge(task.status)}`;
+  el('modalBody').innerHTML = `
+    <div class="detail-row">
+      <div class="detail-group"><div class="detail-label">担当者</div><div class="detail-val">${task.assignee||'-'}</div></div>
+      <div class="detail-group"><div class="detail-label">期限</div><div class="detail-val">${task.deadline||'未設定'}</div></div>
+    </div>
+    ${proj ? `<div style="margin-bottom:14px;"><div class="detail-label">プロジェクト</div><div class="detail-val" style="margin-top:4px;"><span class="proj-badge">🗂 ${proj.name}</span></div></div>` : ''}
+    ${task.productName||task.productUrl ? `
+    <div class="detail-row">
+      ${task.productName ? `<div class="detail-group"><div class="detail-label">商品名</div><div class="detail-val">${task.productName}</div></div>` : '<div></div>'}
+      ${task.productUrl ? `<div class="detail-group"><div class="detail-label">商品URL</div><div class="detail-val"><a href="${task.productUrl}" target="_blank" class="detail-link">🔗 商品ページを開く</a></div></div>` : ''}
+    </div>` : ''}
+    <div style="margin-bottom:18px;">
+      <div class="detail-label">作業内容</div>
+      <div style="font-size:14px;line-height:1.7;color:var(--text2);background:var(--surface2);padding:12px;border-radius:var(--radius-sm);margin-top:6px;">${task.content||''}</div>
+    </div>
+    ${task.imageUrl ? `
+    <div style="margin-bottom:18px;">
+      <div class="detail-label">添付画像</div>
+      <img src="${task.imageUrl}" class="detail-img" style="margin-top:8px;" onclick="window.open('${task.imageUrl}','_blank')" title="クリックで拡大" />
+    </div>` : ''}
+    <div class="section-title">ステータス変更</div>
+    <div class="status-btns">
+      <button class="s-btn s-btn-todo ${task.status==='todo'?'active':''}" onclick="updateStatus('todo')">⏳ 未着手</button>
+      <button class="s-btn s-btn-inprogress ${task.status==='inprogress'?'active':''}" onclick="updateStatus('inprogress')">🔄 進行中</button>
+      <button class="s-btn s-btn-done ${task.status==='done'?'active':''}" onclick="updateStatus('done')">✅ 完了</button>
+    </div>
+    <div class="section-title">コメント（${comments.length}件）</div>
+    <div class="comment-list">
+      ${comments.length ? comments.map(c=>`
+        <div class="comment">
+          <div class="comment-meta"><span class="comment-author">${c.author}</span>　${fmtDate(c.createdAt)}</div>
+          <div class="comment-text">${c.text}</div>
+        </div>`).join('') : '<p style="color:var(--text4);font-size:13px;padding:8px 0;">コメントはまだありません</p>'}
+    </div>
+    <div class="comment-form">
+      <textarea id="commentInput" placeholder="コメントを入力..."></textarea>
+      <button class="btn btn-sm" onclick="addComment()">送信</button>
+    </div>
+  `;
+  el('modalFooter').innerHTML = currentUser.role === 'admin' ? `<button class="btn btn-danger btn-sm" onclick="deleteTask('${id}')">タスク削除</button>` : '';
+  openModal('taskModal');
+};
+
+window.closeModal = function(id) { el(id).classList.remove('show'); if(id==='taskModal') currentTaskId=null; };
+window.openModal = function(id) { el(id).classList.add('show'); };
+
+window.updateStatus = async function(status) {
+  if (!currentTaskId) return;
+  await F.updateDoc(F.doc(db,'tasks',currentTaskId), { status, adminRead: status!=='done' });
+  showAlert('ステータスを更新しました', 'success');
+  closeModal('taskModal');
+};
+
+window.addComment = async function() {
+  const text = el('commentInput').value.trim();
+  if (!text || !currentTaskId) return;
+  await F.addDoc(F.collection(db,'tasks',currentTaskId,'comments'), {
+    text, author: currentUser.name, createdAt: F.serverTimestamp()
+  });
+  const id = currentTaskId; closeModal('taskModal');
+  setTimeout(() => window.openTask(id), 100);
+};
+
+window.deleteTask = async function(id) {
+  if (!confirm('このタスクを削除しますか？')) return;
+  await F.deleteDoc(F.doc(db,'tasks',id));
+  closeModal('taskModal');
+  showAlert('タスクを削除しました', 'success');
+};
+
+// ── TABLE ──
+function taskTable(list, showAssignee) {
+  return `<div style="overflow-x:auto;"><table class="task-table"><thead><tr>
+    <th>モール</th>
+    <th>作業内容</th>
+    ${showAssignee ? '<th>担当者</th>' : ''}
+    <th>ステータス</th>
+    <th>商品</th>
+    <th>作成日</th>
+  </tr></thead><tbody>
+  ${list.map(t => {
+    const proj = t.projectId ? projects.find(p=>p.id===t.projectId) : null;
+    return `<tr onclick="openTask('${t.id}')">
+      <td>${mallBadge(t.mall)}</td>
+      <td>
+        <div style="font-size:14px;color:var(--text);">${(t.content||'').substring(0,50)}${(t.content||'').length>50?'…':''}</div>
+        ${proj ? `<div style="margin-top:4px;"><span class="proj-badge">🗂 ${proj.name}</span></div>` : ''}
+        ${t.status==='done'&&!t.adminRead&&currentUser?.role==='admin' ? '<span class="new-badge">NEW</span>' : ''}
+        ${t.imageUrl ? '<span style="font-size:11px;color:var(--text4);margin-left:4px;">🖼️</span>' : ''}
+      </td>
+      ${showAssignee ? `<td style="font-size:13px;font-weight:500;">${t.assignee||'-'}</td>` : ''}
+      <td>${statusBadge(t.status)}</td>
+      <td>
+        ${t.productName ? `<div style="font-size:12px;font-weight:500;color:var(--text2);">${t.productName}</div>` : ''}
+        ${t.productUrl ? `<a href="${t.productUrl}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:var(--accent);">🔗 リンク</a>` : ''}
+        ${!t.productName&&!t.productUrl ? '<span style="color:var(--text4);font-size:12px;">-</span>' : ''}
+      </td>
+      <td style="font-size:12px;color:var(--text3);white-space:nowrap;">${fmtDate(t.createdAt)}</td>
+    </tr>`;}).join('')}
+  </tbody></table></div>`;
+}
+
+// ── HELPERS ──
+function mallBadge(m) {
+  const map={rakuten:['mall-rakuten','楽天'],yahoo:['mall-yahoo','Yahoo!'],amazon:['mall-amazon','Amazon'],other:['mall-other','その他']};
+  const [cls,lbl]=map[m]||map.other;
+  return `<span class="mall-badge ${cls}">${lbl}</span>`;
+}
+function statusBadge(s) {
+  const map={todo:['s-todo','⏳ 未着手'],inprogress:['s-inprogress','🔄 進行中'],done:['s-done','✅ 完了']};
+  const [cls,lbl]=map[s]||map.todo;
+  return `<span class="status-badge ${cls}">${lbl}</span>`;
+}
+function fmtDate(ts) {
+  if (!ts) return '-';
+  const d = ts.seconds ? new Date(ts.seconds*1000) : new Date(ts);
+  return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function empty(msg) { return `<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">${msg}</div></div>`; }
+function el(id) { return document.getElementById(id); }
+function show(id) { el(id).style.display='flex'; }
+function hide(id) { el(id).style.display='none'; }
+
+window.showAlert = function(msg, type='success') {
+  const d = document.createElement('div');
+  d.className = `alert alert-${type}`;
+  d.innerHTML = `${type==='success'?'✅':'❌'} ${msg}`;
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(), 3000);
+};
+
+function requestNotif() {
+  if ('Notification' in window && Notification.permission==='default') Notification.requestPermission();
+}
+function notifyBrowser(msg) {
+  if ('Notification' in window && Notification.permission==='granted') new Notification('TaskFlow', { body: msg });
+}
+
+// Close modals on overlay click
+['taskModal','projectModal'].forEach(id => {
+  el(id).addEventListener('click', e => { if(e.target===el(id)) closeModal(id); });
+});
+
+init();
+</script>
+</body>
+</html>

@@ -40,7 +40,7 @@ body { font-family: 'Noto Sans JP', 'Sora', sans-serif; background: var(--bg); c
 
 /* ── FORM ELEMENTS ── */
 label { font-size: 13px; font-weight: 600; color: var(--text2); display: block; margin-bottom: 5px; }
-input[type=text], input[type=password], input[type=url], select, textarea {
+input[type=text], input[type=password], input[type=url], input[type=date], select, textarea {
   width: 100%; padding: 10px 13px; background: var(--surface2);
   border: 1.5px solid var(--border); border-radius: var(--radius-sm);
   color: var(--text); font-family: inherit; font-size: 14px; outline: none;
@@ -445,14 +445,21 @@ main { max-width: 1440px; margin: 0 0 0 224px; padding: 32px clamp(22px,4vw,56px
 }
 .quick-input::placeholder { color:#94a3b8; }
 .quick-input:focus { box-shadow:0 0 0 4px rgba(147,197,253,.28); }
-.quick-options { position:relative; z-index:1; display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:10px; margin-top:10px; }
+.quick-options { position:relative; z-index:1; display:grid; grid-template-columns:1fr 1fr 1fr 1fr auto; gap:10px; margin-top:10px; }
 .quick-options select, .quick-options input { background:#fff; border:0; color:#172033; height:43px; }
+.quick-attachment-row { position:relative; z-index:1; display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:11px; }
+.quick-attach-btn { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.28); color:#fff; padding:7px 11px; border-radius:8px; cursor:pointer; font:inherit; font-size:12px; }
+.quick-attach-btn:hover { background:rgba(255,255,255,.18); }
+.quick-file-name { color:#dbeafe; font-size:12px; max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.quick-preview { width:36px; height:36px; border-radius:7px; object-fit:cover; border:2px solid rgba(255,255,255,.65); display:none; }
 .quick-send { height:43px; padding:0 22px; background:#f97316; white-space:nowrap; }
 .quick-send:hover { background:#ea580c; }
 .quick-detail { position:relative; z-index:1; display:inline-block; margin-top:12px; color:#dbeafe; font-size:12px; cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
 .dashboard-row { display:grid; grid-template-columns:minmax(0,1.6fr) minmax(270px,.7fr); gap:20px; align-items:start; }
 .stats-grid { grid-template-columns:repeat(3,1fr); gap:12px; }
 .stat-card { padding:17px; }
+.stat-card[data-status] { cursor:pointer; transition:.15s ease; }
+.stat-card[data-status]:hover { border-color:#93c5fd; box-shadow:0 7px 18px rgba(37,99,235,.09); transform:translateY(-1px); }
 .stat-card:first-child { display:none; }
 .stat-val { font-size:23px; }
 .attention-card .attention-item { display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid var(--border); cursor:pointer; }
@@ -646,10 +653,17 @@ main { max-width: 1440px; margin: 0 0 0 224px; padding: 32px clamp(22px,4vw,56px
             <option value="amazon">Amazon</option>
             <option value="other">その他</option>
           </select>
-          <input class="quick-deadline" type="text" id="quickDeadline" aria-label="期限" placeholder="期限（例：今日中）" />
+          <select id="quickProject" aria-label="プロジェクト"><option value="">プロジェクトなし</option></select>
+          <input class="quick-deadline" type="date" id="quickDeadline" aria-label="期限" />
           <button class="btn quick-send" id="quickSendBtn" onclick="createQuickTask()">依頼を送る →</button>
         </div>
-        <span class="quick-detail" onclick="switchTab('createTask')">画像・商品URLなどの詳細を追加する</span>
+        <div class="quick-attachment-row">
+          <button type="button" class="quick-attach-btn" onclick="document.getElementById('quickImgFileInput').click()">📎 画像を追加</button>
+          <input type="file" id="quickImgFileInput" accept="image/*" onchange="handleQuickFileSelect(event)" style="display:none;" />
+          <img id="quickImgPreview" class="quick-preview" alt="添付画像プレビュー" />
+          <span class="quick-file-name" id="quickFileName">画像は入力欄への貼り付けにも対応</span>
+          <span class="quick-detail" onclick="switchTab('createTask')" style="margin-top:0;margin-left:auto;">商品URLなどの詳細を追加</span>
+        </div>
       </section>
       <div class="dashboard-row">
         <div>
@@ -700,7 +714,7 @@ main { max-width: 1440px; margin: 0 0 0 224px; padding: 32px clamp(22px,4vw,56px
     <!-- COMPLETED -->
     <div class="panel" id="panel-completed">
       <div class="card">
-        <div class="card-header"><div class="card-title">✅ 完了タスク</div></div>
+        <div class="card-header"><div class="card-title">✅ 完了タスク</div><button class="btn btn-white btn-sm" id="archiveToggleBtn" onclick="toggleArchived()">アーカイブ済みを表示</button></div>
         <div id="completedTable"></div>
       </div>
     </div>
@@ -787,7 +801,7 @@ main { max-width: 1440px; margin: 0 0 0 224px; padding: 32px clamp(22px,4vw,56px
             </div>
             <div>
               <label>期限（任意）</label>
-              <input type="text" id="newDeadline" placeholder="例：2025/06/30" />
+              <input type="date" id="newDeadline" />
             </div>
             <div class="full">
               <label>添付画像（スクリーンショット等）</label>
@@ -888,7 +902,7 @@ main { max-width: 1440px; margin: 0 0 0 224px; padding: 32px clamp(22px,4vw,56px
       </div>
       <div class="form-field">
         <label>期限（任意）</label>
-        <input type="text" id="projDeadline" placeholder="例：2025/09/30" />
+        <input type="date" id="projDeadline" />
       </div>
     </div>
     <div class="modal-footer">
@@ -908,6 +922,7 @@ let db, storage, F;
 let currentUser = null;
 let tasks = [], staffList = [], projects = [];
 let uploadedFile = null, currentTaskId = null;
+let quickUploadedFile = null, showArchivedTasks = false;
 
 // ── CONFIG ──
 function loadConfig() {
@@ -1054,28 +1069,35 @@ function renderPanel(n) {
 
 // ── DASHBOARD ──
 function renderDashboard() {
-  const t = tasks.length, todo = tasks.filter(x=>x.status==='todo').length,
-        inp = tasks.filter(x=>x.status==='inprogress').length, done = tasks.filter(x=>x.status==='done').length;
+  const activeTasks = tasks.filter(x=>!x.archived);
+  const t = activeTasks.length, todo = activeTasks.filter(x=>x.status==='todo').length,
+        inp = activeTasks.filter(x=>x.status==='inprogress').length, done = activeTasks.filter(x=>x.status==='done').length;
   el('statsGrid').innerHTML = [
     ['#fff7ed','#fed7aa',t,'📋','全タスク'],
     ['#f3f4f6','#e5e7eb',todo,'⏳','未着手'],
     ['#eff6ff','#bfdbfe',inp,'🔄','進行中'],
     ['#f0fdf4','#bbf7d0',done,'✅','完了'],
   ].map(([bg,bc,val,ico,lbl])=>`
-    <div class="stat-card">
+    <div class="stat-card" data-status="${lbl==='未着手'?'todo':lbl==='進行中'?'inprogress':lbl==='完了'?'done':''}" onclick="filterByStatus('${lbl==='未着手'?'todo':lbl==='進行中'?'inprogress':lbl==='完了'?'done':''}')">
       <div class="stat-icon" style="background:${bg};border:1px solid ${bc};">${ico}</div>
       <div><div class="stat-val">${val}</div><div class="stat-label">${lbl}</div></div>
     </div>`).join('');
-  el('recentList').innerHTML = tasks.length ? taskTable(tasks.slice(0,8), true) : empty('タスクがありません');
-  const overdue = tasks.filter(x => x.status !== 'done' && isOverdue(x.deadline)).length;
-  const unassigned = tasks.filter(x => !x.assignee).length;
-  const newDone = tasks.filter(x => x.status === 'done' && !x.adminRead).length;
+  el('recentList').innerHTML = activeTasks.length ? taskTable(activeTasks.slice(0,8), true) : empty('タスクがありません');
+  const overdue = activeTasks.filter(x => x.status !== 'done' && isOverdue(x.deadline)).length;
+  const unassigned = activeTasks.filter(x => !x.assignee).length;
+  const newDone = activeTasks.filter(x => x.status === 'done' && !x.adminRead).length;
   el('attentionList').innerHTML = `
     <div class="attention-item" onclick="switchTab('completed')"><span>完了の確認</span><span class="attention-num">${newDone}</span></div>
     <div class="attention-item" onclick="switchTab('allTasks')"><span>未着手のタスク</span><span class="attention-num">${todo}</span></div>
     <div class="attention-item" onclick="switchTab('allTasks')"><span>期限を超過</span><span class="attention-num">${overdue}</span></div>
     ${unassigned ? `<div class="attention-item" onclick="switchTab('allTasks')"><span>担当者未設定</span><span class="attention-num">${unassigned}</span></div>` : ''}`;
 }
+
+window.filterByStatus = function(status) {
+  switchTab('allTasks');
+  el('fStatus').value = status;
+  renderAll();
+};
 
 function isOverdue(deadline) {
   if (!deadline) return false;
@@ -1090,7 +1112,7 @@ function isOverdue(deadline) {
 window.renderAll = function() {
   const mall = el('fMall').value, status = el('fStatus').value,
         staff = el('fStaff').value, proj = el('fProject').value;
-  let f = tasks;
+  let f = tasks.filter(t=>!t.archived);
   if (mall) f = f.filter(t=>t.mall===mall);
   if (status) f = f.filter(t=>t.status===status);
   if (staff) f = f.filter(t=>t.assignee===staff);
@@ -1100,26 +1122,29 @@ window.renderAll = function() {
 
 // ── COMPLETED ──
 function renderCompleted() {
-  const done = tasks.filter(t=>t.status==='done');
-  el('completedTable').innerHTML = done.length ? taskTable(done, true) : empty('完了タスクはまだありません');
+  const done = tasks.filter(t=>t.status==='done' && (showArchivedTasks ? t.archived : !t.archived));
+  el('archiveToggleBtn').textContent = showArchivedTasks ? '通常の完了タスクを表示' : 'アーカイブ済みを表示';
+  el('completedTable').innerHTML = done.length ? taskTable(done, true) : empty(showArchivedTasks ? 'アーカイブ済みタスクはありません' : '完了タスクはまだありません');
 }
 
+window.toggleArchived = function() { showArchivedTasks = !showArchivedTasks; renderCompleted(); };
+
 function updateBadge() {
-  const n = tasks.filter(t=>t.status==='done'&&!t.adminRead).length;
+  const n = tasks.filter(t=>t.status==='done'&&!t.adminRead&&!t.archived).length;
   [el('completedBadge'), el('notifBadge')].forEach(b => {
     b.textContent = n; b.style.display = n > 0 ? 'flex' : 'none';
   });
 }
 
 async function markRead() {
-  const unread = tasks.filter(t=>t.status==='done'&&!t.adminRead);
+  const unread = tasks.filter(t=>t.status==='done'&&!t.adminRead&&!t.archived);
   for (const t of unread) await F.updateDoc(F.doc(db,'tasks',t.id), { adminRead: true });
 }
 
 // ── MY TASKS (ADMIN) ──
 window.renderMyTasksAdmin = function() {
   const mall = el('fMyMallA').value, status = el('fMyStatusA').value;
-  let f = tasks.filter(t=>t.assignee==='管理者');
+  let f = tasks.filter(t=>t.assignee==='管理者'&&!t.archived);
   if (mall) f = f.filter(t=>t.mall===mall);
   if (status) f = f.filter(t=>t.status===status);
   el('adminMyTasksTitle').textContent = `👑 自分のタスク（${f.length}件）`;
@@ -1129,7 +1154,7 @@ window.renderMyTasksAdmin = function() {
 // ── MY TASKS (STAFF) ──
 window.renderMyTasksStaff = function() {
   const mall = el('fMyMall').value, status = el('fMyStatus').value;
-  let f = tasks.filter(t=>t.assignee===currentUser.name);
+  let f = tasks.filter(t=>t.assignee===currentUser.name&&!t.archived);
   if (mall) f = f.filter(t=>t.mall===mall);
   if (status) f = f.filter(t=>t.status===status);
   el('staffMyTasksTitle').textContent = `📋 ${currentUser.name} のタスク（${f.length}件）`;
@@ -1151,7 +1176,7 @@ window.renderProjects = function() {
     return;
   }
   grid.innerHTML = projects.map(p => {
-    const related = tasks.filter(t=>t.projectId===p.id);
+    const related = tasks.filter(t=>t.projectId===p.id&&!t.archived);
     const done = related.filter(t=>t.status==='done').length;
     const pct = related.length ? Math.round(done/related.length*100) : 0;
     return `<div class="project-card" onclick="openProjectDetail('${p.id}')">
@@ -1167,7 +1192,7 @@ window.renderProjects = function() {
 window.openProjectDetail = function(id) {
   const p = projects.find(x=>x.id===id);
   if (!p) return;
-  const related = tasks.filter(t=>t.projectId===id);
+  const related = tasks.filter(t=>t.projectId===id&&!t.archived);
   el('projectGrid').style.display = 'none';
   const det = el('projectDetail');
   det.style.display = 'block';
@@ -1221,7 +1246,7 @@ window.deleteProject = async function(id) {
 };
 
 function refreshProjectDropdowns() {
-  ['newProject','fProject'].forEach(id => {
+  ['newProject','quickProject','fProject'].forEach(id => {
     const s = el(id); if (!s) return;
     const cur = s.value;
     s.innerHTML = '<option value="">なし</option>' + projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
@@ -1253,7 +1278,7 @@ function refreshStaffDropdowns() {
 function renderStaffMgmt() {
   if (!staffList.length) { el('staffListEl').innerHTML = empty('スタッフが登録されていません'); return; }
   el('staffListEl').innerHTML = staffList.map(s => {
-    const cnt = tasks.filter(t=>t.assignee===s.name).length;
+    const cnt = tasks.filter(t=>t.assignee===s.name&&!t.archived).length;
     return `<div class="staff-item">
       <div class="staff-avatar">${s.name[0]}</div>
       <div style="flex:1">
@@ -1307,6 +1332,19 @@ function previewImg(file) {
   r.readAsDataURL(file);
 }
 
+window.handleQuickFileSelect = e => {
+  const file = e.target.files[0];
+  if (file) setQuickImage(file);
+};
+
+function setQuickImage(file) {
+  if (!file?.type.startsWith('image/')) { showAlert('画像ファイルを選択してください', 'error'); return; }
+  quickUploadedFile = file;
+  const preview = el('quickImgPreview');
+  preview.src = URL.createObjectURL(file); preview.style.display = 'block';
+  el('quickFileName').textContent = file.name || '貼り付けた画像';
+}
+
 window.createTask = async function() {
   const content = el('newContent').value.trim(), assignee = el('newAssignee').value;
   if (!content) { showAlert('作業内容を入力してください', 'error'); return; }
@@ -1323,7 +1361,7 @@ window.createTask = async function() {
     productUrl: el('newProductUrl').value.trim(),
     projectId: el('newProject').value || null,
     deadline: el('newDeadline').value.trim(),
-    imageUrl, status: 'todo', adminRead: true,
+    imageUrl, status: 'todo', archived: false, adminRead: true,
     createdAt: F.serverTimestamp()
   });
   ['newContent','newProductName','newProductUrl','newDeadline'].forEach(id => el(id).value='');
@@ -1340,14 +1378,25 @@ window.createQuickTask = async function() {
   const btn = el('quickSendBtn');
   btn.disabled = true; btn.textContent = '送信中...';
   try {
+    let imageUrl = null;
+    if (quickUploadedFile) {
+      const storageRef = F.ref(storage, `tasks/${Date.now()}_${quickUploadedFile.name || 'pasted-image.png'}`);
+      const snap = await F.uploadBytes(storageRef, quickUploadedFile);
+      imageUrl = await F.getDownloadURL(snap.ref);
+    }
     await F.addDoc(F.collection(db,'tasks'), {
       mall: el('quickMall').value, content, assignee,
-      productName: '', productUrl: '', projectId: null,
-      deadline: el('quickDeadline').value.trim(), imageUrl: null,
-      status: 'todo', adminRead: true, createdAt: F.serverTimestamp()
+      productName: '', productUrl: '', projectId: el('quickProject').value || null,
+      deadline: el('quickDeadline').value, imageUrl,
+      status: 'todo', archived: false, adminRead: true, createdAt: F.serverTimestamp()
     });
     el('quickContent').value = '';
     el('quickDeadline').value = '';
+    quickUploadedFile = null;
+    el('quickImgFileInput').value = '';
+    el('quickImgPreview').style.display = 'none';
+    el('quickImgPreview').removeAttribute('src');
+    el('quickFileName').textContent = '画像は入力欄への貼り付けにも対応';
     showAlert(`${assignee}さんへ依頼を送りました`, 'success');
     el('quickContent').focus();
   } catch (e) {
@@ -1360,6 +1409,13 @@ window.createQuickTask = async function() {
 
 el('quickContent').addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') createQuickTask();
+});
+el('quickContent').addEventListener('paste', e => {
+  const image = [...(e.clipboardData?.items || [])].find(item => item.type.startsWith('image/'));
+  if (!image) return;
+  e.preventDefault();
+  setQuickImage(image.getAsFile());
+  showAlert('画像を添付しました', 'success');
 });
 
 // ── TASK DETAIL ──
@@ -1410,7 +1466,9 @@ window.openTask = async function(id) {
       <button class="btn btn-sm" onclick="addComment()">送信</button>
     </div>
   `;
-  el('modalFooter').innerHTML = currentUser.role === 'admin' ? `<button class="btn btn-danger btn-sm" onclick="deleteTask('${id}')">タスク削除</button>` : '';
+  el('modalFooter').innerHTML = currentUser.role === 'admin' ? `
+    ${task.status==='done' ? `<button class="btn btn-white btn-sm" onclick="setTaskArchived('${id}',${!task.archived})">${task.archived?'アーカイブから戻す':'アーカイブする'}</button>` : ''}
+    <button class="btn btn-danger btn-sm" onclick="deleteTask('${id}')">タスク削除</button>` : '';
   openModal('taskModal');
 };
 
@@ -1419,7 +1477,7 @@ window.openModal = function(id) { el(id).classList.add('show'); };
 
 window.updateStatus = async function(status) {
   if (!currentTaskId) return;
-  await F.updateDoc(F.doc(db,'tasks',currentTaskId), { status, adminRead: status!=='done' });
+  await F.updateDoc(F.doc(db,'tasks',currentTaskId), { status, archived: false, adminRead: status!=='done' });
   showAlert('ステータスを更新しました', 'success');
   closeModal('taskModal');
 };
@@ -1439,6 +1497,12 @@ window.deleteTask = async function(id) {
   await F.deleteDoc(F.doc(db,'tasks',id));
   closeModal('taskModal');
   showAlert('タスクを削除しました', 'success');
+};
+
+window.setTaskArchived = async function(id, archived) {
+  await F.updateDoc(F.doc(db,'tasks',id), { archived });
+  closeModal('taskModal');
+  showAlert(archived ? '完了タスクをアーカイブしました' : 'アーカイブから戻しました', 'success');
 };
 
 // ── TABLE ──

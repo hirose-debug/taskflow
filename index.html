@@ -376,6 +376,143 @@ main { padding: 24px 28px; max-width: 1280px; margin: 0 auto; }
   header { padding: 0 16px; }
   .tabs { padding: 0 16px; }
 }
+
+/* ── 2026 UI REFRESH ── */
+:root {
+  --bg: #f5f7fb;
+  --white: #ffffff;
+  --surface: #ffffff;
+  --surface2: #f8fafc;
+  --border: #e2e8f0;
+  --border2: #cbd5e1;
+  --accent: #2563eb;
+  --accent-light: #eff6ff;
+  --accent-dark: #1d4ed8;
+  --text: #172033;
+  --text2: #475569;
+  --text3: #64748b;
+  --text4: #94a3b8;
+  --shadow: 0 1px 2px rgba(15,23,42,.05);
+  --shadow-md: 0 10px 24px rgba(15,23,42,.10);
+  --shadow-lg: 0 24px 64px rgba(15,23,42,.18);
+}
+body { line-height: 1.55; }
+#configScreen, #loginScreen { background: linear-gradient(135deg,#eff6ff 0%,#f8fafc 50%,#fff7ed 100%); }
+#appScreen { min-height: 100vh; }
+header {
+  height: 68px; padding: 0 32px; margin-left: 224px;
+  background: rgba(255,255,255,.92); border-bottom-color: var(--border);
+}
+.app-brand .icon, .brand-icon { background: linear-gradient(135deg,#2563eb,#4f46e5); }
+.user-chip { color: #1d4ed8; border-color: #bfdbfe; background: #eff6ff; }
+.icon-btn { background: #fff; }
+.badge { border-color: #fff; }
+.tabs {
+  position: fixed; inset: 0 auto 0 0; z-index: 120; width: 224px;
+  padding: 22px 14px; display: flex; flex-direction: column; gap: 5px;
+  background: #111827; border: 0; overflow-y: auto;
+}
+.tabs::before {
+  content: 'TaskFlow'; color: #fff; font: 700 19px 'Sora',sans-serif;
+  padding: 0 14px 24px; letter-spacing: -.3px;
+}
+.tab {
+  padding: 12px 14px; color: #94a3b8; border: 0; border-radius: 10px;
+  font-size: 13px; font-weight: 600;
+}
+.tab:hover { color: #fff; background: rgba(255,255,255,.07); }
+.tab.active { color: #fff; background: #2563eb; border: 0; }
+#tab-completed, #tab-createTask, #tab-myTasks { display: none; }
+main { max-width: 1440px; margin: 0 0 0 224px; padding: 32px clamp(22px,4vw,56px) 56px; }
+.page-heading { margin-bottom: 22px; }
+.page-heading h1 { font-size: 25px; letter-spacing: -.5px; }
+.page-heading p { color: var(--text3); margin-top: 4px; }
+.card { box-shadow: var(--shadow); }
+.card-header { padding: 18px 22px; }
+.card-title { font-size: 16px; }
+.quick-create {
+  position: relative; overflow: hidden; padding: 26px; margin-bottom: 22px;
+  background: linear-gradient(135deg,#172554 0%,#1e3a8a 55%,#312e81 100%);
+  border-radius: 18px; color: #fff; box-shadow: 0 16px 38px rgba(30,58,138,.22);
+}
+.quick-create::after { content:''; position:absolute; width:240px; height:240px; border-radius:50%; background:rgba(255,255,255,.07); right:-80px; top:-110px; }
+.quick-create-head { position:relative; z-index:1; margin-bottom:16px; }
+.quick-create-head h2 { font-size:20px; letter-spacing:-.3px; }
+.quick-create-head p { color:#bfdbfe; margin-top:3px; font-size:13px; }
+.quick-input {
+  position:relative; z-index:1; background:#fff; border:0; border-radius:12px;
+  color:#172033; min-height:84px; padding:15px 16px; font-size:16px;
+}
+.quick-input::placeholder { color:#94a3b8; }
+.quick-input:focus { box-shadow:0 0 0 4px rgba(147,197,253,.28); }
+.quick-options { position:relative; z-index:1; display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:10px; margin-top:10px; }
+.quick-options select, .quick-options input { background:#fff; border:0; color:#172033; height:43px; }
+.quick-send { height:43px; padding:0 22px; background:#f97316; white-space:nowrap; }
+.quick-send:hover { background:#ea580c; }
+.quick-detail { position:relative; z-index:1; display:inline-block; margin-top:12px; color:#dbeafe; font-size:12px; cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+.dashboard-row { display:grid; grid-template-columns:minmax(0,1.6fr) minmax(270px,.7fr); gap:20px; align-items:start; }
+.stats-grid { grid-template-columns:repeat(3,1fr); gap:12px; }
+.stat-card { padding:17px; }
+.stat-card:first-child { display:none; }
+.stat-val { font-size:23px; }
+.attention-card .attention-item { display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid var(--border); cursor:pointer; }
+.attention-card .attention-item:last-child { border:0; }
+.attention-num { min-width:30px; height:30px; padding:0 9px; display:flex; align-items:center; justify-content:center; border-radius:9px; background:#fff7ed; color:#c2410c; font-weight:700; }
+.task-list { display:grid; gap:9px; padding:12px; }
+.task-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; padding:15px 16px; border:1px solid var(--border); border-radius:11px; background:#fff; cursor:pointer; transition:.15s ease; }
+.task-row:hover { border-color:#93c5fd; box-shadow:0 6px 18px rgba(37,99,235,.08); transform:translateY(-1px); }
+.task-row-main { min-width:0; }
+.task-row-title { color:var(--text); font-size:14px; font-weight:650; line-height:1.55; }
+.task-row-meta { display:flex; gap:8px 14px; flex-wrap:wrap; margin-top:7px; color:var(--text3); font-size:12px; }
+.task-row-side { display:flex; flex-direction:column; align-items:flex-end; justify-content:space-between; gap:8px; }
+.task-row-date { color:var(--text4); font-size:11px; }
+.filters { padding:12px; border:1px solid var(--border); background:var(--surface2); border-radius:11px; }
+.filter-select { background:#fff; }
+.panel > .card > .card-body > #allTasksTable { margin:0 -20px -20px; }
+.empty { padding:42px 20px; }
+.empty-icon { font-size:30px; opacity:.65; }
+.modal-overlay { background:rgba(15,23,42,.56); }
+.alert-success { background:#ecfdf5; border-color:#86efac; color:#166534; }
+.alert-error { background:#fef2f2; border-color:#fca5a5; color:#991b1b; }
+.mobile-quick-btn { display:none; }
+
+@media (max-width: 900px) {
+  .dashboard-row { grid-template-columns:1fr; }
+  .quick-options { grid-template-columns:1fr 1fr; }
+  .quick-send { width:100%; justify-content:center; }
+}
+@media (max-width: 768px) {
+  header { margin-left:0; height:60px; padding:0 14px; }
+  header .app-brand { display:none; }
+  .logout-btn { padding:6px 9px; font-size:12px; }
+  .tabs { inset:auto 0 0 0; width:auto; height:68px; padding:6px 8px max(6px,env(safe-area-inset-bottom)); flex-direction:row; justify-content:space-around; overflow:visible; box-shadow:0 -4px 18px rgba(15,23,42,.10); }
+  .tabs::before { display:none; }
+  .tab { flex:1; min-width:0; padding:8px 4px; justify-content:center; font-size:11px; border-radius:9px; }
+  #tab-allTasks::first-line, #tab-projects::first-line, #tab-staffMgmt::first-line { font-size:15px; }
+  main { margin:0; padding:20px 14px 92px; }
+  .page-heading h1 { font-size:21px; }
+  .quick-create { padding:20px 16px; border-radius:15px; }
+  .quick-create-head h2 { font-size:18px; }
+  .quick-input { min-height:96px; font-size:16px; }
+  .quick-options { grid-template-columns:1fr 1fr; }
+  .quick-options .quick-deadline { grid-column:1/-1; }
+  .quick-send { grid-column:1/-1; }
+  .stats-grid { grid-template-columns:repeat(3,1fr); gap:7px; }
+  .stat-card { display:block; padding:13px 10px; text-align:center; }
+  .stat-icon { width:34px; height:34px; margin:0 auto 8px; }
+  .task-row { grid-template-columns:1fr; }
+  .task-row-side { flex-direction:row; align-items:center; }
+  .card-body { padding:14px; }
+  .filters select { flex:1; min-width:calc(50% - 5px); }
+  .modal { max-width:100%; max-height:92vh; align-self:flex-end; border-radius:18px 18px 0 0; }
+  .modal-overlay { padding:0; }
+  .mobile-quick-btn {
+    display:flex; position:fixed; z-index:150; right:16px; bottom:82px;
+    width:54px; height:54px; padding:0; border:0; border-radius:50%;
+    align-items:center; justify-content:center; background:#f97316; color:#fff;
+    font-size:27px; box-shadow:0 10px 24px rgba(234,88,12,.32); cursor:pointer;
+  }
+}
 </style>
 </head>
 <body>
@@ -470,37 +607,69 @@ main { padding: 24px 28px; max-width: 1280px; margin: 0 auto; }
 
   <!-- ADMIN TABS -->
   <div class="tabs" id="adminTabs" style="display:none;">
-    <div class="tab active" id="tab-dashboard" onclick="switchTab('dashboard')">📊 ダッシュボード</div>
-    <div class="tab" id="tab-allTasks" onclick="switchTab('allTasks')">📋 全タスク</div>
+    <div class="tab active" id="tab-dashboard" onclick="switchTab('dashboard')">⌂ ホーム</div>
+    <div class="tab" id="tab-allTasks" onclick="switchTab('allTasks')">☑ タスク</div>
     <div class="tab" id="tab-completed" onclick="switchTab('completed')">
       ✅ 完了タスク
       <span class="tab-badge" id="completedBadge" style="display:none;"></span>
     </div>
     <div class="tab" id="tab-myTasks" onclick="switchTab('myTasks')">👑 自分のタスク</div>
-    <div class="tab" id="tab-projects" onclick="switchTab('projects')">🗂 プロジェクト</div>
+    <div class="tab" id="tab-projects" onclick="switchTab('projects')">▦ プロジェクト</div>
     <div class="tab" id="tab-createTask" onclick="switchTab('createTask')">➕ タスク作成</div>
-    <div class="tab" id="tab-staffMgmt" onclick="switchTab('staffMgmt')">👥 スタッフ管理</div>
+    <div class="tab" id="tab-staffMgmt" onclick="switchTab('staffMgmt')">♙ スタッフ</div>
   </div>
 
   <!-- STAFF TABS -->
   <div class="tabs" id="staffTabs" style="display:none;">
     <div class="tab active" id="tab-myTasksStaff" onclick="switchTab('myTasksStaff')">📋 マイタスク</div>
   </div>
+  <button class="mobile-quick-btn" id="mobileQuickBtn" onclick="focusQuickTask()" aria-label="新しい依頼">＋</button>
 
   <main>
     <!-- DASHBOARD -->
     <div class="panel active" id="panel-dashboard">
-      <div class="stats-grid" id="statsGrid"></div>
-      <div class="card">
-        <div class="card-header"><div class="card-title">📌 最近のタスク</div></div>
-        <div id="recentList"></div>
+      <div class="page-heading">
+        <h1>今日のタスク</h1>
+        <p>思いついた依頼を、その場ですぐスタッフへ共有できます。</p>
+      </div>
+      <section class="quick-create">
+        <div class="quick-create-head">
+          <h2>新しい依頼を送る</h2>
+          <p>まずは作業内容だけでもOKです。詳細はあとから追加できます。</p>
+        </div>
+        <textarea class="quick-input" id="quickContent" placeholder="例：楽天の商品画像を新しい画像に差し替えてください"></textarea>
+        <div class="quick-options">
+          <select id="quickAssignee" aria-label="担当者"></select>
+          <select id="quickMall" aria-label="モール">
+            <option value="rakuten">楽天</option>
+            <option value="yahoo">Yahoo!</option>
+            <option value="amazon">Amazon</option>
+            <option value="other">その他</option>
+          </select>
+          <input class="quick-deadline" type="text" id="quickDeadline" aria-label="期限" placeholder="期限（例：今日中）" />
+          <button class="btn quick-send" id="quickSendBtn" onclick="createQuickTask()">依頼を送る →</button>
+        </div>
+        <span class="quick-detail" onclick="switchTab('createTask')">画像・商品URLなどの詳細を追加する</span>
+      </section>
+      <div class="dashboard-row">
+        <div>
+          <div class="stats-grid" id="statsGrid"></div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">最近のタスク</div><button class="btn btn-white btn-sm" onclick="switchTab('allTasks')">すべて見る</button></div>
+            <div id="recentList"></div>
+          </div>
+        </div>
+        <div class="card attention-card">
+          <div class="card-header"><div class="card-title">いま確認すること</div></div>
+          <div class="card-body" id="attentionList"></div>
+        </div>
       </div>
     </div>
 
     <!-- ALL TASKS -->
     <div class="panel" id="panel-allTasks">
       <div class="card">
-        <div class="card-header"><div class="card-title">📋 全タスク一覧</div></div>
+        <div class="card-header"><div class="card-title">タスク一覧</div><button class="btn btn-sm" onclick="switchTab('createTask')">＋ 新しい依頼</button></div>
         <div class="card-body">
           <div class="filters">
             <select class="filter-select" id="fMall" onchange="renderAll()">
@@ -822,11 +991,12 @@ function showLogin() {
 
 // ── APP ──
 function showApp() {
-  hide('loginScreen'); show('appScreen');
+  hide('loginScreen'); el('appScreen').style.display = 'block';
   el('headerUser').textContent = currentUser.role === 'admin' ? '👑 管理者' : `👤 ${currentUser.name}`;
   el('adminTabs').style.display = currentUser.role === 'admin' ? 'flex' : 'none';
   el('staffTabs').style.display = currentUser.role === 'staff' ? 'flex' : 'none';
   el('notifBtn').style.display = currentUser.role === 'admin' ? 'flex' : 'none';
+  el('mobileQuickBtn').style.display = currentUser.role === 'admin' ? '' : 'none';
   if (currentUser.role === 'admin') { switchTab('dashboard'); requestNotif(); }
   else switchTab('myTasksStaff');
   listenTasks();
@@ -866,6 +1036,11 @@ window.switchTab = function(name) {
 };
 
 window.switchToCompleted = function() { if (currentUser?.role === 'admin') switchTab('completed'); };
+window.focusQuickTask = function() {
+  if (currentUser?.role !== 'admin') return;
+  switchTab('dashboard');
+  setTimeout(() => { el('quickContent').scrollIntoView({behavior:'smooth',block:'center'}); el('quickContent').focus(); }, 50);
+};
 
 function renderPanel(n) {
   if (n === 'dashboard') renderDashboard();
@@ -892,6 +1067,23 @@ function renderDashboard() {
       <div><div class="stat-val">${val}</div><div class="stat-label">${lbl}</div></div>
     </div>`).join('');
   el('recentList').innerHTML = tasks.length ? taskTable(tasks.slice(0,8), true) : empty('タスクがありません');
+  const overdue = tasks.filter(x => x.status !== 'done' && isOverdue(x.deadline)).length;
+  const unassigned = tasks.filter(x => !x.assignee).length;
+  const newDone = tasks.filter(x => x.status === 'done' && !x.adminRead).length;
+  el('attentionList').innerHTML = `
+    <div class="attention-item" onclick="switchTab('completed')"><span>完了の確認</span><span class="attention-num">${newDone}</span></div>
+    <div class="attention-item" onclick="switchTab('allTasks')"><span>未着手のタスク</span><span class="attention-num">${todo}</span></div>
+    <div class="attention-item" onclick="switchTab('allTasks')"><span>期限を超過</span><span class="attention-num">${overdue}</span></div>
+    ${unassigned ? `<div class="attention-item" onclick="switchTab('allTasks')"><span>担当者未設定</span><span class="attention-num">${unassigned}</span></div>` : ''}`;
+}
+
+function isOverdue(deadline) {
+  if (!deadline) return false;
+  const normalized = deadline.replace(/[年月]/g,'/').replace(/日/g,'').replace(/-/g,'/');
+  const d = new Date(normalized);
+  if (Number.isNaN(d.getTime())) return false;
+  d.setHours(23,59,59,999);
+  return d < new Date();
 }
 
 // ── ALL TASKS ──
@@ -1046,11 +1238,11 @@ async function loadStaff() {
 }
 
 function refreshStaffDropdowns() {
-  ['loginStaffSel','newAssignee','fStaff'].forEach(id => {
+  ['loginStaffSel','newAssignee','quickAssignee','fStaff'].forEach(id => {
     const s = el(id); if (!s) return;
     if (id === 'loginStaffSel') {
       s.innerHTML = staffList.map(x=>`<option value="${x.name}">${x.name}</option>`).join('') || '<option value="">スタッフなし</option>';
-    } else if (id === 'newAssignee') {
+    } else if (id === 'newAssignee' || id === 'quickAssignee') {
       s.innerHTML = '<option value="管理者">👑 管理者（自分）</option>' + staffList.map(x=>`<option value="${x.name}">${x.name}</option>`).join('');
     } else {
       s.innerHTML = '<option value="">全担当者</option><option value="管理者">管理者</option>' + staffList.map(x=>`<option value="${x.name}">${x.name}</option>`).join('');
@@ -1140,6 +1332,36 @@ window.createTask = async function() {
   showAlert('タスクを作成しました ✅', 'success');
 };
 
+window.createQuickTask = async function() {
+  const content = el('quickContent').value.trim();
+  const assignee = el('quickAssignee').value;
+  if (!content) { showAlert('依頼内容を入力してください', 'error'); el('quickContent').focus(); return; }
+  if (!assignee) { showAlert('担当者を選択してください', 'error'); return; }
+  const btn = el('quickSendBtn');
+  btn.disabled = true; btn.textContent = '送信中...';
+  try {
+    await F.addDoc(F.collection(db,'tasks'), {
+      mall: el('quickMall').value, content, assignee,
+      productName: '', productUrl: '', projectId: null,
+      deadline: el('quickDeadline').value.trim(), imageUrl: null,
+      status: 'todo', adminRead: true, createdAt: F.serverTimestamp()
+    });
+    el('quickContent').value = '';
+    el('quickDeadline').value = '';
+    showAlert(`${assignee}さんへ依頼を送りました`, 'success');
+    el('quickContent').focus();
+  } catch (e) {
+    console.error(e);
+    showAlert('依頼を送信できませんでした', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '依頼を送る →';
+  }
+};
+
+el('quickContent').addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') createQuickTask();
+});
+
 // ── TASK DETAIL ──
 window.openTask = async function(id) {
   const task = tasks.find(t=>t.id===id); if (!task) return;
@@ -1221,34 +1443,26 @@ window.deleteTask = async function(id) {
 
 // ── TABLE ──
 function taskTable(list, showAssignee) {
-  return `<div style="overflow-x:auto;"><table class="task-table"><thead><tr>
-    <th>モール</th>
-    <th>作業内容</th>
-    ${showAssignee ? '<th>担当者</th>' : ''}
-    <th>ステータス</th>
-    <th>商品</th>
-    <th>作成日</th>
-  </tr></thead><tbody>
-  ${list.map(t => {
+  return `<div class="task-list">${list.map(t => {
     const proj = t.projectId ? projects.find(p=>p.id===t.projectId) : null;
-    return `<tr onclick="openTask('${t.id}')">
-      <td>${mallBadge(t.mall)}</td>
-      <td>
-        <div style="font-size:14px;color:var(--text);">${(t.content||'').substring(0,50)}${(t.content||'').length>50?'…':''}</div>
-        ${proj ? `<div style="margin-top:4px;"><span class="proj-badge">🗂 ${proj.name}</span></div>` : ''}
-        ${t.status==='done'&&!t.adminRead&&currentUser?.role==='admin' ? '<span class="new-badge">NEW</span>' : ''}
-        ${t.imageUrl ? '<span style="font-size:11px;color:var(--text4);margin-left:4px;">🖼️</span>' : ''}
-      </td>
-      ${showAssignee ? `<td style="font-size:13px;font-weight:500;">${t.assignee||'-'}</td>` : ''}
-      <td>${statusBadge(t.status)}</td>
-      <td>
-        ${t.productName ? `<div style="font-size:12px;font-weight:500;color:var(--text2);">${t.productName}</div>` : ''}
-        ${t.productUrl ? `<a href="${t.productUrl}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:var(--accent);">🔗 リンク</a>` : ''}
-        ${!t.productName&&!t.productUrl ? '<span style="color:var(--text4);font-size:12px;">-</span>' : ''}
-      </td>
-      <td style="font-size:12px;color:var(--text3);white-space:nowrap;">${fmtDate(t.createdAt)}</td>
-    </tr>`;}).join('')}
-  </tbody></table></div>`;
+    return `<article class="task-row" onclick="openTask('${t.id}')">
+      <div class="task-row-main">
+        <div class="task-row-title">${(t.content||'').substring(0,90)}${(t.content||'').length>90?'…':''}
+          ${t.status==='done'&&!t.adminRead&&currentUser?.role==='admin' ? '<span class="new-badge">NEW</span>' : ''}
+          ${t.imageUrl ? '<span title="画像あり">🖼️</span>' : ''}
+        </div>
+        <div class="task-row-meta">
+          <span>${mallBadge(t.mall)}</span>
+          ${showAssignee ? `<span>👤 ${t.assignee||'未設定'}</span>` : ''}
+          ${t.deadline ? `<span style="${isOverdue(t.deadline)&&t.status!=='done'?'color:#dc2626;font-weight:600;':''}">◷ ${t.deadline}</span>` : ''}
+          ${t.productName ? `<span>商品：${t.productName}</span>` : ''}
+          ${t.productUrl ? `<a href="${t.productUrl}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);">商品ページ ↗</a>` : ''}
+          ${proj ? `<span class="proj-badge">▦ ${proj.name}</span>` : ''}
+        </div>
+      </div>
+      <div class="task-row-side">${statusBadge(t.status)}<span class="task-row-date">${fmtDate(t.createdAt)}</span></div>
+    </article>`;
+  }).join('')}</div>`;
 }
 
 // ── HELPERS ──

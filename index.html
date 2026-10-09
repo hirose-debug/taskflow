@@ -40,7 +40,7 @@ body { font-family: 'Noto Sans JP', 'Sora', sans-serif; background: var(--bg); c
 
 /* ── FORM ELEMENTS ── */
 label { font-size: 13px; font-weight: 600; color: var(--text2); display: block; margin-bottom: 5px; }
-input[type=text], input[type=password], input[type=url], input[type=date], select, textarea {
+input[type=text], input[type=password], input[type=url], input[type=date], input[type=search], select, textarea {
   width: 100%; padding: 10px 13px; background: var(--surface2);
   border: 1.5px solid var(--border); border-radius: var(--radius-sm);
   color: var(--text); font-family: inherit; font-size: 14px; outline: none;
@@ -658,6 +658,7 @@ main { max-width: 1440px; margin: 0 0 0 224px; padding: 32px clamp(22px,4vw,56px
           <button class="btn quick-send" id="quickSendBtn" onclick="createQuickTask()">依頼を送る →</button>
         </div>
         <div class="quick-attachment-row">
+          <label style="color:white;margin:0;"><input type="checkbox" id="quickUrgent"> 急ぎ（優先通知）</label>
           <button type="button" class="quick-attach-btn" onclick="document.getElementById('quickImgFileInput').click()">📎 画像を追加</button>
           <input type="file" id="quickImgFileInput" accept="image/*" onchange="handleQuickFileSelect(event)" style="display:none;" />
           <img id="quickImgPreview" class="quick-preview" alt="添付画像プレビュー" />
@@ -686,6 +687,8 @@ main { max-width: 1440px; margin: 0 0 0 224px; padding: 32px clamp(22px,4vw,56px
         <div class="card-header"><div class="card-title">タスク一覧</div><button class="btn btn-sm" onclick="switchTab('createTask')">＋ 新しい依頼</button></div>
         <div class="card-body">
           <div class="filters">
+            <input type="search" id="taskSearch" placeholder="作業内容・商品・担当者を検索" aria-label="タスク検索" oninput="renderAll()">
+            <select id="archiveScope" class="filter-select" aria-label="検索範囲" onchange="renderAll()"><option value="active">通常のタスク</option><option value="all">アーカイブを含むすべて</option><option value="archived">アーカイブのみ</option></select>
             <select class="filter-select" id="fMall" onchange="renderAll()">
               <option value="">全モール</option>
               <option value="rakuten">楽天</option>
@@ -783,6 +786,7 @@ main { max-width: 1440px; margin: 0 0 0 224px; padding: 32px clamp(22px,4vw,56px
             </div>
             <div class="full">
               <label>作業内容 *</label>
+              <label><input type="checkbox" id="newUrgent"> 急ぎ（優先通知）</label>
               <textarea id="newContent" rows="4" placeholder="作業の詳細を入力してください..."></textarea>
             </div>
             <div class="section-divider">🛍 商品情報（任意）</div>
@@ -845,6 +849,8 @@ main { max-width: 1440px; margin: 0 0 0 224px; padding: 32px clamp(22px,4vw,56px
 
     <!-- MY TASKS (Staff) -->
     <div class="panel" id="panel-myTasksStaff">
+      <div class="page-heading"><h1>自分の作業</h1><p>急ぎ・期限が近い順に表示します。作業開始と完了報告はタスクから操作できます。</p></div>
+      <div class="filters"><input type="search" id="staffSearch" placeholder="過去の作業も検索" aria-label="自分のタスク検索" oninput="renderMyTasksStaff()"><select id="staffScope" aria-label="作業表示" onchange="renderMyTasksStaff()"><option value="open">未完了</option><option value="done">完了</option><option value="all">過去を含むすべて</option></select></div>
       <div class="card">
         <div class="card-header">
           <div class="card-title" id="staffMyTasksTitle">📋 マイタスク</div>
@@ -923,6 +929,19 @@ let currentUser = null;
 let tasks = [], staffList = [], projects = [];
 let uploadedFile = null, currentTaskId = null;
 let quickUploadedFile = null, showArchivedTasks = false;
+let taskUnsubscribe = null, pendingTaskLink = new URLSearchParams(location.hash.slice(1)).get('task');
+window.addEventListener('hashchange', () => { pendingTaskLink = new URLSearchParams(location.hash.slice(1)).get('task'); openPendingTask(); });
+function openPendingTask() {
+  if (!pendingTaskLink || !currentUser || !tasks.length) return;
+  const id = pendingTaskLink; pendingTaskLink = null;
+  const task = tasks.find(t => t.id === id);
+  if (!task || (currentUser.role !== 'admin' && task.assignee !== currentUser.name)) { showAlert('このタスクは表示できません', 'error'); return; }
+  openTask(id);
+}
+function matchesSearch(task, value) {
+  const text = [task.content, task.productName, task.assignee, task.deadline, projects.find(p=>p.id===task.projectId)?.name].join(' ').normalize('NFKC').toLowerCase();
+  return value.normalize('NFKC').toLowerCase().trim().split(/\s+/).every(word=>text.includes(word));
+}
 
 // ── CONFIG ──
 function loadConfig() {
@@ -1018,8 +1037,9 @@ function showApp() {
 }
 
 function listenTasks() {
+  if (taskUnsubscribe) taskUnsubscribe();
   const q = F.query(F.collection(db, 'tasks'), F.orderBy('createdAt', 'desc'));
-  F.onSnapshot(q, snap => {
+  taskUnsubscribe = F.onSnapshot(q, snap => {
     const prev = [...tasks];
     tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     if (currentUser?.role === 'admin') {
@@ -1032,6 +1052,7 @@ function listenTasks() {
       updateBadge();
     }
     renderCurrentPanel();
+    openPendingTask();
   });
 }
 
@@ -1112,7 +1133,9 @@ function isOverdue(deadline) {
 window.renderAll = function() {
   const mall = el('fMall').value, status = el('fStatus').value,
         staff = el('fStaff').value, proj = el('fProject').value;
-  let f = tasks.filter(t=>!t.archived);
+  const scope = el('archiveScope').value;
+  let f = tasks.filter(t=>scope==='all' || (scope==='archived' ? t.archived : !t.archived));
+  f = f.filter(t=>matchesSearch(t, el('taskSearch').value));
   if (mall) f = f.filter(t=>t.mall===mall);
   if (status) f = f.filter(t=>t.status===status);
   if (staff) f = f.filter(t=>t.assignee===staff);
@@ -1154,7 +1177,10 @@ window.renderMyTasksAdmin = function() {
 // ── MY TASKS (STAFF) ──
 window.renderMyTasksStaff = function() {
   const mall = el('fMyMall').value, status = el('fMyStatus').value;
-  let f = tasks.filter(t=>t.assignee===currentUser.name&&!t.archived);
+  const scope = el('staffScope').value;
+  let f = tasks.filter(t=>t.assignee===currentUser.name && (scope==='all' || (!t.archived && (scope==='done' ? t.status==='done' : t.status!=='done'))));
+  f = f.filter(t=>matchesSearch(t,el('staffSearch').value));
+  f.sort((a,b)=>Number(!!b.urgent)-Number(!!a.urgent) || (Date.parse(a.deadline)||Infinity)-(Date.parse(b.deadline)||Infinity));
   if (mall) f = f.filter(t=>t.mall===mall);
   if (status) f = f.filter(t=>t.status===status);
   el('staffMyTasksTitle').textContent = `📋 ${currentUser.name} のタスク（${f.length}件）`;
@@ -1269,6 +1295,7 @@ function refreshStaffDropdowns() {
       s.innerHTML = staffList.map(x=>`<option value="${x.name}">${x.name}</option>`).join('') || '<option value="">スタッフなし</option>';
     } else if (id === 'newAssignee' || id === 'quickAssignee') {
       s.innerHTML = '<option value="管理者">👑 管理者（自分）</option>' + staffList.map(x=>`<option value="${x.name}">${x.name}</option>`).join('');
+      if (staffList.length===1) s.value=staffList[0].name;
     } else {
       s.innerHTML = '<option value="">全担当者</option><option value="管理者">管理者</option>' + staffList.map(x=>`<option value="${x.name}">${x.name}</option>`).join('');
     }
@@ -1361,16 +1388,18 @@ window.createTask = async function() {
     productUrl: el('newProductUrl').value.trim(),
     projectId: el('newProject').value || null,
     deadline: el('newDeadline').value.trim(),
-    imageUrl, status: 'todo', archived: false, adminRead: true,
+    imageUrl, urgent: el('newUrgent').checked, status: 'todo', archived: false, adminRead: true, updatedAt: F.serverTimestamp(),
     createdAt: F.serverTimestamp()
   });
   ['newContent','newProductName','newProductUrl','newDeadline'].forEach(id => el(id).value='');
   el('newProject').value=''; el('imgPreview').style.display='none';
+  el('newUrgent').checked=false;
   uploadedFile=null; el('imgFileInput').value='';
   showAlert('タスクを作成しました ✅', 'success');
 };
 
 window.createQuickTask = async function() {
+  if (el('quickSendBtn').disabled) return;
   const content = el('quickContent').value.trim();
   const assignee = el('quickAssignee').value;
   if (!content) { showAlert('依頼内容を入力してください', 'error'); el('quickContent').focus(); return; }
@@ -1388,16 +1417,17 @@ window.createQuickTask = async function() {
       mall: el('quickMall').value, content, assignee,
       productName: '', productUrl: '', projectId: el('quickProject').value || null,
       deadline: el('quickDeadline').value, imageUrl,
-      status: 'todo', archived: false, adminRead: true, createdAt: F.serverTimestamp()
+      status: 'todo', urgent: el('quickUrgent').checked, archived: false, adminRead: true, updatedAt: F.serverTimestamp(), createdAt: F.serverTimestamp()
     });
     el('quickContent').value = '';
     el('quickDeadline').value = '';
+    el('quickUrgent').checked = false;
     quickUploadedFile = null;
     el('quickImgFileInput').value = '';
     el('quickImgPreview').style.display = 'none';
     el('quickImgPreview').removeAttribute('src');
     el('quickFileName').textContent = '画像は入力欄への貼り付けにも対応';
-    showAlert(`${assignee}さんへ依頼を送りました`, 'success');
+    showAlert(`${assignee}さんへの依頼を保存しました`, 'success');
     el('quickContent').focus();
   } catch (e) {
     console.error(e);
@@ -1421,6 +1451,7 @@ el('quickContent').addEventListener('paste', e => {
 // ── TASK DETAIL ──
 window.openTask = async function(id) {
   const task = tasks.find(t=>t.id===id); if (!task) return;
+  if (!currentUser || (currentUser.role!=='admin' && task.assignee!==currentUser.name)) return;
   currentTaskId = id;
   const snap = await F.getDocs(F.collection(db,'tasks',id,'comments'));
   const comments = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.createdAt?.seconds||0)-(b.createdAt?.seconds||0));
@@ -1477,7 +1508,9 @@ window.openModal = function(id) { el(id).classList.add('show'); };
 
 window.updateStatus = async function(status) {
   if (!currentTaskId) return;
-  await F.updateDoc(F.doc(db,'tasks',currentTaskId), { status, archived: false, adminRead: status!=='done' });
+  const task=tasks.find(t=>t.id===currentTaskId);
+  if (!task || task.status===status) return;
+  await F.updateDoc(F.doc(db,'tasks',currentTaskId), { status, archived: false, updatedAt: F.serverTimestamp(), completedAt: status==='done' ? F.serverTimestamp() : null, adminRead: status!=='done' });
   showAlert('ステータスを更新しました', 'success');
   closeModal('taskModal');
 };
@@ -1500,7 +1533,7 @@ window.deleteTask = async function(id) {
 };
 
 window.setTaskArchived = async function(id, archived) {
-  await F.updateDoc(F.doc(db,'tasks',id), { archived });
+  await F.updateDoc(F.doc(db,'tasks',id), { archived, updatedAt: F.serverTimestamp(), archiveRestoredAt: archived ? null : F.serverTimestamp() });
   closeModal('taskModal');
   showAlert(archived ? '完了タスクをアーカイブしました' : 'アーカイブから戻しました', 'success');
 };
@@ -1512,6 +1545,7 @@ function taskTable(list, showAssignee) {
     return `<article class="task-row" onclick="openTask('${t.id}')">
       <div class="task-row-main">
         <div class="task-row-title">${(t.content||'').substring(0,90)}${(t.content||'').length>90?'…':''}
+          ${t.urgent ? '<span class="new-badge">急ぎ</span>' : ''}${t.archived ? '<span class="proj-badge">アーカイブ</span>' : ''}
           ${t.status==='done'&&!t.adminRead&&currentUser?.role==='admin' ? '<span class="new-badge">NEW</span>' : ''}
           ${t.imageUrl ? '<span title="画像あり">🖼️</span>' : ''}
         </div>
